@@ -1,0 +1,23 @@
+# Entorno virtual
+venv/
+ENV/
+env/
+
+# Archivo de configuración con credenciales reales
+.env
+
+# Archivos temporales de Python / Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Configuración de editor de código
+.vscode/
+.idea/
+
+# Archivos y credenciales de Oracle Wallet
+wallet/
+*.pem
+*.sso
+*.p12
