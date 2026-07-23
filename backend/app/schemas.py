@@ -1,18 +1,39 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
-# Estructura para RECIBIR datos desde el cliente 
+# --- ESQUEMAS PARA ÍTEMS DE PRUEBA ---
 class ItemCreate(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
 
-# Estructura para RESPONDER al cliente (incluye el ID generado por la BD)
 class ItemResponse(BaseModel):
     id: int
     nombre: str
     descripcion: Optional[str] = None
     fecha_creacion: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# --- (POST /contenido) ---
+
+# Estructura que envía el cliente (Checklist Trello)
+class ContenidoCreate(BaseModel):
+    titulo: str
+    texto: str
+
+# Respuesta simulada 
+class ContenidoResponse(BaseModel):
+    id: int
+    titulo: str
+    texto: str
+    resumen: str
+    categoria: str
+    probabilidad: float
+    palabras_clave: List[str]
+    status: str
 
     class Config:
         from_attributes = True
