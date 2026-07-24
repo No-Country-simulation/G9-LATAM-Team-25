@@ -17,7 +17,7 @@ dsn = (
     "(security=(ssl_server_dn_match=yes)))"
 )
 
-print(f"Probando conexion para el usuario: '{user}' con la contraseña: '{password}'")
+print(f"Probando conexión para el usuario: '{user}'...")
 
 try:
     connection = oracledb.connect(user=user, password=password, dsn=dsn)
