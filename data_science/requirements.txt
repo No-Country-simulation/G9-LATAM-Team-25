@@ -1,0 +1,8 @@
+ipykernel
+pandas
+scikit-learn
+joblib
+matplotlib
+jupyter
+deep_translator
+nltk
