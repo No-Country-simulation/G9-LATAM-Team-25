@@ -31,3 +31,17 @@
 4. **OCI Infrastructure:**
    * **Autonomous DB:** Persiste y consulta la información relacional.
    * **Object Storage:** Guarda y entrega los objetos/archivos físicos.
+
+## 📦 Almacenamiento de Modelos — OCI Object Storage
+
+- **Bucket Name:** `models-bucket`
+- **Región:** Colombia Central (Bogotá)
+- **Archivos Almacenados:**
+  - `modelo.pkl`: Modelo clasificador baseline.
+  - `vectorizer.pkl`: Vectorizador de texto.
+
+### Mecanismo de Acceso para Backend (FastAPI)
+El Backend accederá a los archivos mediante **Pre-Authenticated Requests (PAR)** de lectura (o mediante el SDK de OCI `oci`), manteniendo las URLs seguras en las variables de entorno (`.env`):
+
+- `MODEL_URL`: URL PAR para descargar `modelo.pkl`
+- `VECTORIZER_URL`: URL PAR para descargar `vectorizer.pkl`
