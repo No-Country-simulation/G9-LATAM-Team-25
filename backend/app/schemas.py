@@ -1,19 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 
-# JSON de Entrada (Request de cargue)
 class CargaContenidoRequest(BaseModel):
-    titulo: Optional[str] = ""
-    texto: str  # El texto plano es obligatorio para el modelo
-    url_archivo: Optional[str] = ""
+    # El título es opcional, por defecto es None
+    titulo_documento: Optional[str] = None
+    # El texto es estrictamente obligatorio
+    texto_crudo: str
 
-# JSON de Salida (Response simulado)
-class CargaContenidoResponse(BaseModel):
-    id: str
-    titulo: str
-    categoria: str
-    probabilidad: str
-    contenido_relacionado: str
-    autor: str
-    tipo: str
-    url_archivo: str
+    @field_validator('texto_crudo')
+    def texto_no_vacio(cls, value):
+        # Validador personalizado: rechaza strings vacíos o puros espacios
+        if not value or not value.strip():
+            raise ValueError('El texto_crudo no puede estar vacío ni contener solo espacios en blanco.')
+        return value

@@ -1,0 +1,3 @@
+# Contenido de app/ml_models/.gitignore
+*.pkl
+*.joblib
