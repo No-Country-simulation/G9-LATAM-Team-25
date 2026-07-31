@@ -6,3 +6,4 @@ matplotlib
 jupyter
 deep_translator
 nltk
+requests
