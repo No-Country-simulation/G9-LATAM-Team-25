@@ -1,0 +1,26 @@
+# Entornos virtuales
+data_science/.venv/
+data_science/venv/
+data_science/env/
+data_science/.env
+
+# Datos
+data_science/data/*
+
+# Modelos
+data_science/models/*
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# IDE / SO
+.vscode/
+.idea/
+.DS_Store
