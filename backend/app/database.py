@@ -18,7 +18,7 @@ wallet_dir = Path(__file__).resolve().parent.parent / "wallet"
 
 encoded_password = urllib.parse.quote_plus(DB_PASSWORD) if DB_PASSWORD else ""
 
-DSN = "gee6aa642c1f765_g9team25db_medium"
+DSN = "g9team25db_medium" 
 
 DATABASE_URL = f"oracle+oracledb://{DB_USER}:{encoded_password}@{DSN}"
 
