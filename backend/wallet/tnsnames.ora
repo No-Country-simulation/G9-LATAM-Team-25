@@ -1,0 +1,12 @@
+g9team25db_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.sa-bogota-1.oraclecloud.com))(connect_data=(service_name=gee6aa642c1f765_g9team25db_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+g9team25db_medium = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.sa-bogota-1.oraclecloud.com))(connect_data=(service_name=gee6aa642c1f765_g9team25db_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+g9team25db_low = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.sa-bogota-1.oraclecloud.com))(connect_data=(service_name=gee6aa642c1f765_g9team25db_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+g9team25db_tp = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.sa-bogota-1.oraclecloud.com))(connect_data=(service_name=gee6aa642c1f765_g9team25db_tp.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+g9team25db_tpurgent = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.sa-bogota-1.oraclecloud.com))(connect_data=(service_name=gee6aa642c1f765_g9team25db_tpurgent.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+
+
