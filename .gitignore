@@ -24,3 +24,7 @@ dist/
 .vscode/
 .idea/
 .DS_Store
+
+# Archivos locales de herramientas y traspaso
+.codex-remote-attachments/
+PROJECT_CONTEXT_HANDOFF.md

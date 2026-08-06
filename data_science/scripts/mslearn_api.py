@@ -16,12 +16,13 @@ BASE = "https://learn.microsoft.com"
 CATALOG_URL = f"{BASE}/api/catalog/"
 LOCALE = "es-es"
 
+CONTACT_EMAIL = os.getenv("CONTACT_EMAIL")
+CONTACT_SUFFIX = f"; +mailto:{CONTACT_EMAIL}" if CONTACT_EMAIL else ""
+
 HEADERS = {
     "User-Agent": (
         "TechCourseMetadataBot/1.0 "
-        "(Educational Research; "
-        "Non-commercial; "
-        "+mailto:YOUR_EMAIL@example.com)"
+        f"(Educational Research; Non-commercial{CONTACT_SUFFIX})"
     ),
     "Accept": "application/json",
     "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
