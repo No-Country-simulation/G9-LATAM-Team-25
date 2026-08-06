@@ -1,48 +1,69 @@
 # Arquitectura de Infraestructura OCI - G9 Team 25
 
-## 1. Servicios de Oracle Cloud Infrastructure (OCI) Utilizados
+## 1. Servicios e Infraestructura Utilizados
 
-* **Autonomous Database (ATP - `g9team25db`):** Base de datos relacional para la persistencia del análisis de contenidos (`contenidos_procesados`) y consultas del backend mediante conexión `oracledb` con Instance Wallet.
-* **Object Storage (`models-bucket`):** Almacenamiento de artefactos de ML (`modelo.pkl` y `vectorizer.pkl`) accesibles vía solicitudes preautenticadas (PAR).
-* **Resource Manager / Terraform:** Infraestructura como código para el aprovisionamiento de red (`VCN`, `Subnet`, `Internet Gateway`) y cómputo (`Compute VM`).
+* **API / Backend:** FastAPI desplegado de forma pública en Render PaaS (https://g9-latam-team-25.onrender.com).
+* **Autonomous Database (ATP - g9team25db):** Base de datos relacional en Oracle Cloud Infrastructure (OCI) para la persistencia del análisis de contenidos (contenidos_procesados) y consultas del backend mediante conexión directa TLS (TCPS) con python-oracledb.
+* **Object Storage (models-bucket):** Almacenamiento de artefactos de ML (modelo.pkl y vectorizer.pkl) accesibles vía solicitudes preautenticadas (PAR).
+* **Resource Manager / Terraform:** Infraestructura como código para el aprovisionamiento de red (VCN, Subnet, Internet Gateway) y cómputo (Compute VM).
+
+---
 
 ## 2. Diagrama de Conexión
 
-```text
                [ Usuario / Frontend ]
                          │
                          ▼
-                  [ API (FastAPI) ]
+             [ API FastAPI en Render ]
+          (g9-latam-team-25.onrender.com)
                          │
         ┌────────────────┼────────────────┐
         │ (Descarga PAR) │ (Persistencia) │
         ▼                ▼                ▼
 [ Object Storage ] [ Modelo ML ] [ Autonomous DB ]
  (`models-bucket`)  (.pkl/.joblib) (`g9team25db`)
-```
+
+---
 
 ## 3. Descripción del Flujo
 
-1. **Inicialización Backend:** La API FastAPI se conecta a OCI Object Storage mediante las URLs PAR para descargar en memoria el modelo y el vectorizador.
-2. **Procesamiento de Solicitudes:** La API procesa las peticiones enviadas por el usuario/frontend.
-3. **Persistencia en Nube:** Los resultados del análisis se insertan de manera segura en Oracle Autonomous Database en la tabla `contenidos_procesados`.
+1. **Inicialización Backend:** La API FastAPI alojada en Render se conecta a OCI Object Storage mediante las URLs PAR para descargar en memoria el modelo y el vectorizador al arrancar el servicio.
+2. **Procesamiento de Solicitudes:** La API procesa las peticiones enviadas por el usuario/frontend a través de endpoints HTTPS públicos.
+3. **Persistencia en Nube:** Los resultados del análisis se insertan de manera segura en Oracle Autonomous Database en las tablas correspondientes (contenidos_procesados / ITEMS_PRUEBA).
+
+---
 
 ## 4. Almacenamiento de Modelos — OCI Object Storage
 
-* **Bucket Name:** `models-bucket`
-* **Región:** Colombia Central (`sa-bogota-1`)
+* **Bucket Name:** models-bucket
+* **Región:** Colombia Central (sa-bogota-1)
 * **Archivos Almacenados:**
-  * `modelo.pkl`: Modelo clasificador.
-  * `vectorizer.pkl`: Vectorizador de texto.
+  * modelo.pkl: Modelo clasificador.
+  * vectorizer.pkl: Vectorizador de texto.
 
-### Variables de Entorno (`.env`)
+### Variables de Entorno (.env)
 * `MODEL_URL`: URL PAR para descargar el modelo.
 * `VECTORIZER_URL`: URL PAR para descargar el vectorizador.
 * `DB_USER` / `DB_PASSWORD`: Credenciales de acceso a Autonomous Database.
 
 ---
 
-## 5. Estado del Despliegue en Cómputo (Compute VM)
+## 5. Configuración de Red, Conexión a Oracle DB y Lecciones Aprendidas
+
+Para garantizar la conexión remota desde el entorno serverless de Render hacia OCI sin requerir archivos Wallet/mTLS locales ni drivers pesados, se ajustó la infraestructura de red en OCI:
+
+* **Autenticación mTLS (Wallet):** Deshabilitada en la consola de OCI (Mutual TLS: Not required) para permitir conexiones seguras estándar mediante TLS directo (TCPS en el puerto 1522).
+* **Access Control List (ACL):** Configurada para aceptar el bloque CIDR 0.0.0.0/0, permitiendo el tráfico entrante de las IPs dinámicas de Render.
+* **Cadena de Conexión (SQLAlchemy + python-oracledb):** Se estructuró mediante el descriptor TCPS directo con security=(ssl_server_dn_match=yes) dentro de backend/app/database.py.
+
+### Problemas Encontrados y Solución
+* **Error DPY-6000 / DPY-6005 (Listener refused connection):**
+  * *Causa:* La lista de control de acceso (ACL) de la base de datos en OCI estaba restringida a la IP local del desarrollador, bloqueando las peticiones enviadas por Render.
+  * *Solución:* Se actualizó la ACL en OCI agregando la notación CIDR 0.0.0.0/0, permitiendo la sincronización y ejecución de consultas de la base de datos de manera fluida (200 OK).
+
+---
+
+## 6. Estado del Despliegue en Cómputo (Compute VM vs Render PaaS)
 
 * **IaaS / Terraform:** La configuración de red e infraestructura as code fue probada y validada en el pipeline de OCI Resource Manager.
-* **Contingencia Regional:** El aprovisionamiento de la VM física se encuentra en pausa debido a restricciones de capacidad del proveedor en el Data Center de la región (`sa-bogota-1`, error `Out of host capacity`). La API ejecuta y conecta de forma transparente desde el entorno local hacia los servicios gestionados de OCI.
+* **Estrategia de Despliegue Actual:** Debido a restricciones de capacidad temporal en las instancias Compute VM de la región (sa-bogota-1, error Out of host capacity), se adoptó Render PaaS para el hospedaje continuo de la API. Esto permite mantener el servicio disponible públicamente sin interrumpir la integración con Oracle Autonomous Database ni con OCI Object Storage.
