@@ -18,14 +18,14 @@ wallet_dir = Path(__file__).resolve().parent.parent / "wallet"
 
 encoded_password = urllib.parse.quote_plus(DB_PASSWORD) if DB_PASSWORD else ""
 
-# En el modo Thin, pasamos el DSN y la ubicación de la wallet mediante connect_args
 DSN = "gee6aa642c1f765_g9team25db_medium"
 
 DATABASE_URL = f"oracle+oracledb://{DB_USER}:{encoded_password}@{DSN}"
 
-# oracledb usará el Thin mode por defecto al pasar wallet_location
+# En modo Thin, config_dir le indica a oracledb dónde buscar tnsnames.ora y wallet_location los certificados SSL
 connect_args = {}
 if wallet_dir.exists():
+    connect_args["config_dir"] = str(wallet_dir)
     connect_args["wallet_location"] = str(wallet_dir)
 
 engine = create_engine(
