@@ -1,47 +1,48 @@
-# Arquitectura Preliminar OCI - G9 Team 25
-
-> **Nota:** Este documento representa el diseño de arquitectura preliminar para el proyecto y está sujeto a cambios a medida que evolucione el desarrollo.
+# Arquitectura de Infraestructura OCI - G9 Team 25
 
 ## 1. Servicios de Oracle Cloud Infrastructure (OCI) Utilizados
 
-* **Autonomous Database (Transaction Processing - ATP):** Almacenamiento y gestión del dataset estructurado, información de usuarios y tablas relacionales del sistema.
-* **Object Storage:** Almacenamiento de archivos no estructurados (documentos PDF, imágenes y archivos subidos por la aplicación).
+* **Autonomous Database (ATP - `g9team25db`):** Base de datos relacional para la persistencia del análisis de contenidos (`contenidos_procesados`) y consultas del backend mediante conexión `oracledb` con Instance Wallet.
+* **Object Storage (`models-bucket`):** Almacenamiento de artefactos de ML (`modelo.pkl` y `vectorizer.pkl`) accesibles vía solicitudes preautenticadas (PAR).
+* **Resource Manager / Terraform:** Infraestructura como código para el aprovisionamiento de red (`VCN`, `Subnet`, `Internet Gateway`) y cómputo (`Compute VM`).
 
 ## 2. Diagrama de Conexión
 
 ```text
-[ Usuario / Frontend ]
-           │
-           ▼
-    [ API (FastAPI) ]
-           │
-           ▼
-  [ Modelo de Datos ]
-           │
-  ┌────────┴────────┐
-  ▼                 ▼
-[ Autonomous DB ]  [ Object Storage ]
- (Estructurado)      (Archivos)
+               [ Usuario / Frontend ]
+                         │
+                         ▼
+                  [ API (FastAPI) ]
+                         │
+        ┌────────────────┼────────────────┐
+        │ (Descarga PAR) │ (Persistencia) │
+        ▼                ▼                ▼
+[ Object Storage ] [ Modelo ML ] [ Autonomous DB ]
+ (`models-bucket`)  (.pkl/.joblib) (`g9team25db`)
 ```
+
 ## 3. Descripción del Flujo
 
-1. **Usuario / Frontend:** Envía las peticiones hacia la API backend.
-2. **API (FastAPI):** Maneja la lógica de negocio, validaciones y endpoints.
-3. **Modelo / Servicios:** Procesa los datos y gestiona la comunicación hacia la infraestructura en la nube.
-4. **OCI Infrastructure:**
-   * **Autonomous DB:** Persiste y consulta la información relacional.
-   * **Object Storage:** Guarda y entrega los objetos/archivos físicos.
+1. **Inicialización Backend:** La API FastAPI se conecta a OCI Object Storage mediante las URLs PAR para descargar en memoria el modelo y el vectorizador.
+2. **Procesamiento de Solicitudes:** La API procesa las peticiones enviadas por el usuario/frontend.
+3. **Persistencia en Nube:** Los resultados del análisis se insertan de manera segura en Oracle Autonomous Database en la tabla `contenidos_procesados`.
 
-## 📦 Almacenamiento de Modelos — OCI Object Storage
+## 4. Almacenamiento de Modelos — OCI Object Storage
 
-- **Bucket Name:** `models-bucket`
-- **Región:** Colombia Central (Bogotá)
-- **Archivos Almacenados:**
-  - `modelo.pkl`: Modelo clasificador baseline.
-  - `vectorizer.pkl`: Vectorizador de texto.
+* **Bucket Name:** `models-bucket`
+* **Región:** Colombia Central (`sa-bogota-1`)
+* **Archivos Almacenados:**
+  * `modelo.pkl`: Modelo clasificador.
+  * `vectorizer.pkl`: Vectorizador de texto.
 
-### Mecanismo de Acceso para Backend (FastAPI)
-El Backend accederá a los archivos mediante **Pre-Authenticated Requests (PAR)** de lectura (o mediante el SDK de OCI `oci`), manteniendo las URLs seguras en las variables de entorno (`.env`):
+### Variables de Entorno (`.env`)
+* `MODEL_URL`: URL PAR para descargar el modelo.
+* `VECTORIZER_URL`: URL PAR para descargar el vectorizador.
+* `DB_USER` / `DB_PASSWORD`: Credenciales de acceso a Autonomous Database.
 
-- `MODEL_URL`: URL PAR para descargar `modelo.pkl`
-- `VECTORIZER_URL`: URL PAR para descargar `vectorizer.pkl`
+---
+
+## 5. Estado del Despliegue en Cómputo (Compute VM)
+
+* **IaaS / Terraform:** La configuración de red e infraestructura as code fue probada y validada en el pipeline de OCI Resource Manager.
+* **Contingencia Regional:** El aprovisionamiento de la VM física se encuentra en pausa debido a restricciones de capacidad del proveedor en el Data Center de la región (`sa-bogota-1`, error `Out of host capacity`). La API ejecuta y conecta de forma transparente desde el entorno local hacia los servicios gestionados de OCI.
