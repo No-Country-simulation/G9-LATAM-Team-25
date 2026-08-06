@@ -13,22 +13,23 @@ load_dotenv(dotenv_path=env_path, override=True)
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-# Ruta absoluta a la carpeta del wallet
+# Ruta absoluta a la carpeta wallet
 wallet_dir = Path(__file__).resolve().parent.parent / "wallet"
 
 encoded_password = urllib.parse.quote_plus(DB_PASSWORD) if DB_PASSWORD else ""
 
-# Alias definido exactamente en tu tnsnames.ora
-DSN = "g9team25db_medium" 
+# Alias configurado en tu tnsnames.ora
+DSN = "g9team25db_medium"
 
 DATABASE_URL = f"oracle+oracledb://{DB_USER}:{encoded_password}@{DSN}"
 
 connect_args = {}
 if wallet_dir.exists():
     wallet_path_str = str(wallet_dir.resolve())
-    # config_dir carga tnsnames.ora y los certificados ssl del wallet automáticamente
+    # config_dir carga automáticamente tnsnames.ora y sqlnet.ora desde la carpeta wallet
     connect_args["config_dir"] = wallet_path_str
-    connect_args["wallet_location"] = wallet_path_str
+    # Descomenta la siguiente línea solo si tu wallet tiene una contraseña personalizada para el ewallet.pem
+    # connect_args["wallet_password"] = "TuPasswordDelWallet"
 
 engine = create_engine(
     DATABASE_URL, 
