@@ -16,10 +16,6 @@ __pycache__/
 .vscode/
 .idea/
 
-# Archivos y credenciales de Oracle Wallet
-wallet/
-*.pem
-*.sso
-*.p12
+# Modelos PKL
 *.pkl
 backend/*.pkl
