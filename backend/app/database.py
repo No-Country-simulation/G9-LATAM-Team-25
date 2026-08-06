@@ -13,21 +13,27 @@ load_dotenv(dotenv_path=env_path, override=True)
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-# Ruta a la carpeta wallet (Render la creará en /opt/render/project/src/backend/wallet o relativa)
+# Ruta a la carpeta wallet
 wallet_dir = Path(__file__).resolve().parent.parent / "wallet"
-
-# Inicializar oracledb con la wallet si la carpeta existe
-if wallet_dir.exists():
-    oracledb.init_oracle_client(config_dir=str(wallet_dir))
 
 encoded_password = urllib.parse.quote_plus(DB_PASSWORD) if DB_PASSWORD else ""
 
-# Puedes usar el alias definido dentro de tu tnsnames.ora (ejemplo: gee6aa642c1f765_g9team25db_medium)
+# En el modo Thin, pasamos el DSN y la ubicación de la wallet mediante connect_args
 DSN = "gee6aa642c1f765_g9team25db_medium"
 
 DATABASE_URL = f"oracle+oracledb://{DB_USER}:{encoded_password}@{DSN}"
 
-engine = create_engine(DATABASE_URL, echo=True)
+# oracledb usará el Thin mode por defecto al pasar wallet_location
+connect_args = {}
+if wallet_dir.exists():
+    connect_args["wallet_location"] = str(wallet_dir)
+
+engine = create_engine(
+    DATABASE_URL, 
+    connect_args=connect_args,
+    echo=True
+)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
