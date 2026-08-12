@@ -39,6 +39,39 @@ class LimpiezaTextoTests(unittest.TestCase):
         )
         self.assertEqual(resultado, "desarrollo backend elegante")
 
+    def test_decodifica_entidades_y_elimina_etiquetas_html(self) -> None:
+        """Evita que las entidades y etiquetas se conviertan en tokens."""
+
+        resultado = normalizar_texto(
+            "&lt;p&gt;Resumen&nbsp;de Python&lt;/p&gt;"
+        )
+        self.assertEqual(resultado, "resumen de python")
+
+    def test_decodifica_entidades_html_numericas(self) -> None:
+        """Conserva los caracteres representados mediante entidades numéricas."""
+
+        resultado = normalizar_texto("Programaci&#243;n para Backend")
+        self.assertEqual(resultado, "programación para backend")
+
+    def test_descarta_scripts_y_estilos(self) -> None:
+        """No incorpora código JavaScript o CSS al texto visible."""
+
+        resultado = normalizar_texto(
+            "<style>.oculto { color: red; }</style>"
+            "<p>Curso de Python</p>"
+            "<script>alert('hola')</script>"
+        )
+        self.assertEqual(resultado, "curso de python")
+
+    def test_limpia_html_y_quita_stopwords(self) -> None:
+        """Aplica la limpieza completa después de procesar el HTML."""
+
+        resultado = limpiar_texto(
+            "&lt;p&gt;Curso de Python para Backend&lt;/p&gt;",
+            palabras_vacias={"de", "para"},
+        )
+        self.assertEqual(resultado, "curso python backend")
+
     def test_limpieza_unifica_los_dos_pasos(self) -> None:
         """Comprueba que limpiar_texto combine normalización y stopwords."""
 
