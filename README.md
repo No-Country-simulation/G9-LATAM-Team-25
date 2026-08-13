@@ -1,7 +1,7 @@
 # 🚀 Integración del Modelo de IA y Validación de Entradas
 
 ## 📌 Rama: `feat/back-carga-modelo`
-**Autor:** Carlos (Líder Backend / Full Stack - Equipo tejONEs)  
+
 **Proyecto:** HoneyGuard - Hackathon ONE G9 (Alura + Oracle)
 
 ---
