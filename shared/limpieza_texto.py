@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import unicodedata
 from collections.abc import Collection
 from functools import lru_cache
@@ -9,6 +10,13 @@ from html import unescape
 from html.parser import HTMLParser
 
 from nltk.corpus import stopwords as nltk_stopwords
+
+
+_PATRON_URL = re.compile(
+    r"\b(?:https?://|www\.)\S+"
+    r"|\b(?:[a-z0-9-]+\.)+[a-z]{2,}/\S+",
+    flags=re.IGNORECASE,
+)
 
 
 def _convertir_a_texto(texto: object | None) -> str:
@@ -74,14 +82,15 @@ def _extraer_texto_html(texto: object | None) -> str:
 
 
 def normalizar_texto(texto: object | None) -> str:
-    """Convierte a minúsculas, quita puntuación y normaliza espacios.
+    """Quita URLs, convierte a minúsculas y normaliza puntuación y espacios.
 
     La puntuación se reemplaza por espacios para evitar unir palabras separadas
     por guiones u otros signos. Se consideran todos los caracteres de
     puntuación Unicode, incluidos ``¿`` y ``¡``.
     """
 
-    texto_normalizado = _extraer_texto_html(texto).lower()
+    texto_sin_urls = _PATRON_URL.sub(" ", _extraer_texto_html(texto))
+    texto_normalizado = texto_sin_urls.lower()
     sin_puntuacion = "".join(
         " " if unicodedata.category(caracter).startswith("P") else caracter
         for caracter in texto_normalizado

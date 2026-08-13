@@ -63,6 +63,36 @@ class LimpiezaTextoTests(unittest.TestCase):
         )
         self.assertEqual(resultado, "curso de python")
 
+    def test_elimina_urls_visibles_y_conserva_texto_de_enlaces(self) -> None:
+        """Quita URLs sin descartar el texto útil de enlaces HTML."""
+
+        resultado = normalizar_texto(
+            '<p>Consulta HTTP://ejemplo.com/Guia y '
+            '<a href="https://docs.example.com">la documentación</a>: '
+            "https://stackoverflow.com/questions/123.</p>"
+        )
+        self.assertEqual(resultado, "consulta y la documentación")
+
+    def test_elimina_urls_www_y_dominios_con_ruta(self) -> None:
+        """Quita URLs sin esquema cuando son inequívocas por prefijo o ruta."""
+
+        resultado = normalizar_texto(
+            "Consulte stackoverflow.com/a/3791506/1836776 o "
+            "www.opensuny.org/catalogo para obtener ayuda."
+        )
+        self.assertEqual(resultado, "consulte o para obtener ayuda")
+
+    def test_conserva_nombres_y_dominios_sin_ruta(self) -> None:
+        """No confunde nombres o dominios técnicos sin ruta con una URL."""
+
+        resultado = normalizar_texto(
+            "Esta pregunta aparece en StackOverflow y utiliza ASP.NET."
+        )
+        self.assertEqual(
+            resultado,
+            "esta pregunta aparece en stackoverflow y utiliza asp net",
+        )
+
     def test_limpia_html_y_quita_stopwords(self) -> None:
         """Aplica la limpieza completa después de procesar el HTML."""
 
