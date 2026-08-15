@@ -1,118 +1,59 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
-from pydantic import BaseModel
-from typing import List, Optional
+from fastapi import APIRouter, UploadFile, File, Query
+# Asegúrate de importar ambas funciones de tu archivo de utilidades
+from app.utils.oci_storage import subir_archivo_oci, borrar_archivo_oci
 
-# (Imagina que estas son tus importaciones reales de utils y servicios)
-# from app.utils.oci_storage import subir_archivo_oci, borrar_archivo_oci
-# from app.utils.extraccion import extraer_texto_plano
-# from app.utils.limpieza_de_texto import limpiar_texto
-# from app.ml_models.loader import chequear_duplicado, predecir_categoria, generar_resumen
-# from app.db.crud import guardar_documento_db
-
+# LA LÍNEA MÁGICA: Creamos la variable "router"
 router = APIRouter()
 
-# Esquema de respuesta para Pydantic
-class RespuestaCargaExitosa(BaseModel):
-    id: int
-    categoria: str
-    probabilidad: float
-    contenido_relacionado: List[str]
-    autor: str
-    tipo: str
-    url_archivo: str
-    resumen: str
-
-@router.post("/contenido/archivo", status_code=status.HTTP_200_OK)
-async def procesar_archivo(
-    file: UploadFile = File(...),
-    autor: str = Form(...),
-    tipo: str = Form(...)
-):
-    # 1. Validación de formato (.pdf o .txt)
-    if not file.filename.lower().endswith(('.pdf', '.txt')):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Formato no soportado. Por favor sube un archivo .pdf o .txt"
-        )
-
-    url_archivo = None
-    
+# ==========================================
+# 1. ENDPOINT DE PRUEBA: SUBIDA A OCI
+# ==========================================
+@router.post("/test-oci-subir")
+async def prueba_subida_oci(file: UploadFile = File(...)):
+    """
+    Endpoint temporal para validar la subida de archivos a Oracle Cloud.
+    """
     try:
-        # 2. Subir archivo a OCI Object Storage
-        # Asume que esta función retorna la URL pública/segura del archivo subido
-        url_archivo = await subir_archivo_oci(file)
-
-        # 3. y 4. Extracción de texto y Manejo de errores
-        try:
-            texto_crudo = extraer_texto_plano(file)
-            
-            # Validación de texto vacío o imagen escaneada
-            if not texto_crudo or len(texto_crudo.strip()) == 0:
-                raise ValueError("El archivo no tiene texto digital legible, está vacío o es una imagen escaneada.")
-                
-        except Exception as e:
-            # Si la extracción falla, hacemos ROLLBACK borrando el archivo de OCI
-            if url_archivo:
-                await borrar_archivo_oci(url_archivo)
-            
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Fallo en la extracción de texto: {str(e)}"
-            )
-
-        # 5. Ejecutar chequeo de similitud
-        # Asume que esta función compara con la BD y devuelve un booleano y metadatos
-        es_duplicado, similitud, titulo_original = chequear_duplicado(texto_crudo, umbral=0.80)
-
-        if es_duplicado:
-            # Cancelar flujo y limpiar OCI
-            await borrar_archivo_oci(url_archivo)
-            return {
-                "mensaje": "Flujo cancelado: El archivo ya existe en la base de conocimientos.",
-                "similitud": f"{similitud * 100:.2f}%",
-                "titulo_original": titulo_original
-            }
-
-        # 6. Si NO es duplicado: Procesamiento de IA
-        # Aquí pasamos el texto por las funciones del modelo
-        categoria, probabilidad, palabras_clave = predecir_categoria(texto_crudo)
-        resumen = generar_resumen(texto_crudo) # Resumen automático de 3 líneas
-
-        # 7. Persistir en Oracle Autonomous Database
-        # Se guarda toda la info y se recupera el ID generado por la BD
-        registro_db = guardar_documento_db(
-            titulo=file.filename,
-            texto=texto_crudo,
-            categoria=categoria,
-            probabilidad=probabilidad,
-            palabras_clave=palabras_clave,
-            resumen=resumen,
-            autor=autor,
-            tipo=tipo,
-            url_archivo=url_archivo
-        )
-
-        # 8. Retornar el JSON estructurado final
+        # Ejecutamos la función de subida. 
+        # (Si tu función subir_archivo_oci no tiene "async" en la definición, quítale el "await" aquí)
+        url_generada = await subir_archivo_oci(file)
+        
         return {
-            "id": registro_db.id,
-            "categoria": str(categoria), # Asegurar tipo nativo de Python para evitar error 500
-            "probabilidad": float(probabilidad), # Mapeo seguro para Pydantic
-            "contenido_relacionado": palabras_clave,
-            "autor": autor,
-            "tipo": tipo,
-            "url_archivo": url_archivo,
-            "resumen": resumen
+            "estado": "¡Subida exitosa! 🚀", 
+            "url_en_oracle": url_generada
+        }
+    except Exception as e:
+        return {
+            "estado": "Fallo en la subida 🛑", 
+            "error_detalle": str(e)
         }
 
-    except HTTPException:
-        # Relanzar las excepciones HTTP que ya controlamos arriba
-        raise
-    except Exception as general_error:
-        # Catch-all para cualquier otro error imprevisto (ej. caída de BD). 
-        # Intentar borrar el archivo de OCI si se quedó huérfano
-        if url_archivo:
-             await borrar_archivo_oci(url_archivo)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error interno del servidor: {str(general_error)}"
-        )
+# ==========================================
+# 2. ENDPOINT DE PRUEBA: BORRADO EN OCI
+# ==========================================
+@router.delete("/test-oci-borrar")
+async def prueba_borrado_oci(
+    url_archivo: str = Query(..., description="Pega aquí la URL pública de Oracle Cloud que generaste en la prueba de subida")
+):
+    """
+    Endpoint temporal solo para validar que el borrado en Oracle Cloud funcione correctamente.
+    """
+    try:
+        # Ejecutamos la función de limpieza asíncrona
+        exito = await borrar_archivo_oci(url_archivo)
+        
+        if exito:
+            return {
+                "estado": "¡Borrado exitoso! 🗑️", 
+                "mensaje": "El archivo fue eliminado correctamente de tu bucket de Oracle."
+            }
+        else:
+            return {
+                "estado": "Fallo al intentar borrar ⚠️", 
+                "mensaje": "Revisa la terminal de VS Code para ver el error exacto."
+            }
+    except Exception as e:
+        return {
+            "estado": "Error de conexión 🛑", 
+            "error_detalle": str(e)
+        }

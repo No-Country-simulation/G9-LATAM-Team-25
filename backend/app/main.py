@@ -1,11 +1,20 @@
+
+from dotenv import load_dotenv
+
 import os
 import nltk  # <-- NUEVO: Importación para descargar las stopwords de Data Science
 from contextlib import asynccontextmanager
+
+# Forzamos a Python a leer el archivo oculto .env
+load_dotenv() 
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.ml_models.loader import load_model
+
+
+
 
 ml_resources = {}
 

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
 # Importaciones simuladas de tus servicios internos (deberás crearlas/conectarlas):
-from app.services.oci_storage import subir_archivo_oci, borrar_archivo_oci
-from app.services.db_oracle import guardar_documento_db
-from app.utils.data_science import extraer_texto_pdf_txt, chequear_duplicado, generar_resumen
+from backend.app.utils.oci_storage import subir_archivo_oci, borrar_archivo_oci
+#from app.services.db_oracle import guardar_documento_db
+#from app.utils.data_science import extraer_texto_pdf_txt, chequear_duplicado, generar_resumen
 
 router = APIRouter()
 
