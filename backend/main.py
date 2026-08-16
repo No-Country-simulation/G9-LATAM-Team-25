@@ -2,10 +2,9 @@ import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base
-import app.models  # SQLAlchemy registra los modelos
-from app.routes import contenido, archivos  # Importas ambos módulos de rutas
+import app.models 
+from app.routes import contenido, archivos 
 
-# Crea automáticamente las tablas en Oracle DB si no existen
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Proyecto G9 Team 25 - Backend")
@@ -18,8 +17,9 @@ app.include_router(archivos.router)
 def health_check():
     return {"status": "ok", "database_user_configured": True}
 
-# Configuración para servir la interfaz estática compilada de React/Vite
-frontend_path = os.path.join(os.path.dirname(__file__), "..", "front-lovable", ".output", "public")
+# Directorio absoluto hacia la compilación del frontend
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+frontend_path = os.path.abspath(os.path.join(BASE_DIR, "..", "front-lovable", ".output", "public"))
 
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
