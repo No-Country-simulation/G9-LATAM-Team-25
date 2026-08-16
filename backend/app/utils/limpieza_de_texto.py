@@ -10,6 +10,7 @@ from html import unescape
 from html.parser import HTMLParser
 
 from nltk.corpus import stopwords as nltk_stopwords
+from fastapi import UploadFile # Importar UploadFile al inicio
 
 
 _PATRON_URL = re.compile(
@@ -143,3 +144,38 @@ def limpiar_texto(
     """
 
     return quitar_stopwords(normalizar_texto(texto), palabras_vacias)
+
+
+# --- FUNCIONES PLACEHOLDER ---
+# Estas funciones son marcadores de posición para evitar NameError
+# Deberán ser implementadas con la lógica real de procesamiento de datos.
+
+async def extraer_texto_pdf_txt(file: UploadFile) -> str:
+    """
+    Placeholder: Extrae texto de un archivo PDF o TXT.
+    Implementación real debería usar librerías como `pypdf` o `pdfplumber`.
+    """
+    if file.filename.endswith(".txt"):
+        return (await file.read()).decode("utf-8")
+    elif file.filename.endswith(".pdf"):
+        # Esto es un placeholder. En una implementación real, aquí iría la lógica
+        # para extraer texto de un PDF.
+        # Por ahora, simularemos que no se pudo extraer texto.
+        return "Este es un texto simulado de un PDF."
+    return ""
+
+def chequear_duplicado(texto_crudo: str, vectorizador=None) -> tuple[bool, str, float]:
+    """
+    Placeholder: Verifica si un texto es duplicado.
+    Implementación real debería usar modelos de similitud.
+    """
+    # Siempre retorna no duplicado para el placeholder
+    return False, "", 0.0
+
+def generar_resumen(texto_crudo: str) -> str:
+    """
+    Placeholder: Genera un resumen de un texto.
+    Implementación real debería usar modelos de resumen (ej. Transformers).
+    """
+    # Retorna un resumen simple para el placeholder
+    return f"Resumen preliminar del texto: {texto_crudo[:100]}..."

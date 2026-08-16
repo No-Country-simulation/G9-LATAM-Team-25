@@ -16,8 +16,6 @@ from app.ml_models.loader import load_model
 
 
 
-ml_resources = {}
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 1. Asegurar que las stopwords estén descargadas en el servidor (Render)
@@ -25,19 +23,19 @@ async def lifespan(app: FastAPI):
     nltk.download('stopwords', quiet=True)
     print("✅ Stopwords listas.")
 
-    # 2. Cargar tus modelos de IA
+    # 2. Cargar tus modelos de IA y asignarlos al estado de la app
     modelo, vectorizador = load_model()
     if modelo and vectorizador:
-        ml_resources["modelo"] = modelo
-        ml_resources["vectorizador"] = vectorizador
-        print("✅ Recursos de IA cargados en memoria.")
+        app.state.modelo = modelo
+        app.state.vectorizador = vectorizador
+        print("✅ Recursos de IA cargados en app.state.")
     else:
         print("⚠️ Advertencia: No se encontraron los modelos de IA.")
 
     yield
 
-    ml_resources.clear()
-    print("🛑 Recursos de IA liberados.")
+    # Opcional: Limpieza si fuera necesario, pero app.state se limpia automáticamente
+    print("🛑 Servidor detenido.")
 
 
 app = FastAPI(title="HoneyGuard API", lifespan=lifespan)
