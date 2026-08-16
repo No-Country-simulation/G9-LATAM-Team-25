@@ -17,13 +17,17 @@ app.include_router(archivos.router)
 def health_check():
     return {"status": "ok", "database_user_configured": True}
 
-# Directorio absoluto hacia la compilación del frontend
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-frontend_path = os.path.abspath(os.path.join(BASE_DIR, "..", "front-lovable", ".output", "public"))
+# Directorio hacia la carpeta raíz del repositorio
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+frontend_path = os.path.join(BASE_DIR, "front-lovable", ".output", "public")
+
+print(f"--> Buscando frontend estático en: {frontend_path}")
 
 if os.path.exists(frontend_path):
+    print("--> ¡Carpeta estática encontrada! Montando frontend...")
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 else:
+    print("--> ADVERTENCIA: No se encontró la carpeta estática. Sirviendo fallback...")
     @app.get("/")
     def read_root():
-        return {"message": "Bienvenido a la API del Proyecto G9 Team 25"}
+        return {"message": "Bienvenido a la API del Proyecto G9 Team 25 (Frontend no encontrado)"}
