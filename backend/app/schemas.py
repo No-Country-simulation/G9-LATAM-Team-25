@@ -44,3 +44,22 @@ class CargaContenidoRequest(BaseModel):
         if not value or not value.strip():
             raise ValueError('El texto_crudo no puede estar vacio ni contener solo espacios en blanco.')
         return value
+
+# --- ESQUEMAS PARA ARCHIVOS Y BASE DE DATOS (OCI + ORACLE DB) ---
+class DocumentoCreate(BaseModel):
+    titulo: str
+    url_archivo: str
+    categoria: Optional[str] = "Procesando"
+    autor: Optional[str] = "Anónimo"
+    tipo: Optional[str] = "pdf"
+
+class DocumentoResponse(BaseModel):
+    id: int
+    titulo: str
+    url_archivo: str
+    categoria: Optional[str] = None
+    autor: Optional[str] = None
+    tipo: Optional[str] = None
+
+    class Config:
+        from_attributes = True
