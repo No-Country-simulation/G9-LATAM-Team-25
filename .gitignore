@@ -3,8 +3,15 @@ venv/
 ENV/
 env/
 
-# Archivo de configuración con credenciales reales
+# Archivos de configuración y secretos
 .env
+*.env
+
+# Llaves de seguridad y certificados (OCI / SSH / API Keys)
+*.pem
+*.key
+oci_config
+*.crt
 
 # Archivos temporales de Python / Cache
 __pycache__/
@@ -19,7 +26,8 @@ __pycache__/
 # Modelos PKL
 *.pkl
 backend/*.pkl
-# Entornos virtuales
+
+# Entornos virtuales (Data Science)
 data_science/.venv/
 data_science/venv/
 data_science/env/
@@ -34,14 +42,10 @@ data_science/models/*
 # Notebooks
 .ipynb_checkpoints/
 
-# Python
-__pycache__/
-*.py[cod]
+# Python build
 *.egg-info/
 build/
 dist/
 
-# IDE / SO
-.vscode/
-.idea/
+# SO
 .DS_Store
