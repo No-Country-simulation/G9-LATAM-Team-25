@@ -1,15 +1,33 @@
-from pydantic import BaseModel, field_validator
-from typing import Optional
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
 
-class CargaContenidoRequest(BaseModel):
-    # El título es opcional, por defecto es None
-    titulo_documento: Optional[str] = None
-    # El texto es estrictamente obligatorio
-    texto_crudo: str
+# Estructura de Entrada (Lo que el usuario/cliente envía)
+class DocumentoCreate(BaseModel):
+    texto: str # Único campo estrictamente obligatorio para el análisis
+    titulo: Optional[str] = None
+    tema: Optional[str] = None
+    autor: Optional[str] = None
+    formato_archivo: str
+    tipo_contenido: Optional[str] = None
+    url_archivo: Optional[str] = None
 
-    @field_validator('texto_crudo')
-    def texto_no_vacio(cls, value):
-        # Validador personalizado: rechaza strings vacíos o puros espacios
-        if not value or not value.strip():
-            raise ValueError('El texto_crudo no puede estar vacío ni contener solo espacios en blanco.')
-        return value
+# Estructura de Salida (Lo que responde la API tras procesar con la IA)
+class DocumentoResponse(BaseModel):
+    id: int
+    titulo: Optional[str] = None
+    tema: Optional[str] = None
+    autor: Optional[str] = None
+    categoria: str
+    probabilidad: float
+    texto: str
+    resumen: Optional[str] = None
+    palabras_clave: Optional[List[str]] = None
+    contenido_relacionado: Optional[List[int]] = None
+    formato_archivo: str
+    tipo_contenido: Optional[str] = None
+    url_archivo: str
+    fecha_creacion: datetime
+
+    class Config:
+        from_attributes = True
