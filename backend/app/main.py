@@ -1,5 +1,4 @@
 import os
-import nltk
 from pathlib import Path
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -17,19 +16,11 @@ from app.database import engine, Base
 import app.models  # Obligatorio para que SQLAlchemy registre los modelos
 from app.routes import contenido
 
-# 2. Crea automáticamente las tablas en Oracle si aún no existen[cite: 6]
-Base.metadata.create_all(bind=engine)
-
 ml_resources = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 3. Descargar NLTK para Data Science (Render)
-    print("⏳ Descargando recursos de NLTK...")
-    nltk.download('stopwords', quiet=True)
-    print("✅ Stopwords listas.")
-
-    # 4. Cargar Modelos de IA en memoria[cite: 10]
+    # 3. Cargar Modelos de IA en memoria[cite: 10]
     modelo, vectorizador = load_model()
     if modelo and vectorizador:
         ml_resources["modelo"] = modelo

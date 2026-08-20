@@ -10,8 +10,6 @@ python-dotenv
 # --- Machine Learning y NLP ---
 joblib
 scikit-learn
-pandas
-nltk
 
 # --- Oracle Cloud y Base de Datos ---
 oci
@@ -19,8 +17,8 @@ SQLAlchemy
 oracledb
 
 # --- Procesamiento y Extracción de Archivos ---
-aiofiles
 PyPDF2
-pypdf
 python-docx
-markitdown[pdf]
+
+# --- Testing ---
+pytest
