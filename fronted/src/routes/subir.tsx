@@ -2,11 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
-import {
-  subirArchivoContenido,
-  esRespuestaDuplicado,
-  type RespuestaCargaArchivo,
-} from "@/lib/contenido-api";
+import { subirArchivo, esDuplicado, colorConfianza, porcentaje } from "@/lib/api";
 
 export const Route = createFileRoute("/subir")({
   head: () => ({
@@ -32,30 +28,20 @@ export const Route = createFileRoute("/subir")({
 
 const TIPOS = ["artículo", "documentación", "tutorial", "apunte", "investigación", "otro"];
 
-function colorConfianza(requiereRevision: boolean, probabilidad: number) {
-  if (requiereRevision) return "var(--confianza-baja)";
-  if (probabilidad < 0.75) return "var(--confianza-media)";
-  return "var(--confianza-alta)";
-}
-
 function SubirArchivo() {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [autor, setAutor] = useState("");
   const [tipo, setTipo] = useState("artículo");
   const [errorLocal, setErrorLocal] = useState("");
 
-  const subida = useMutation<RespuestaCargaArchivo, Error>({
+  const subida = useMutation({
     mutationFn: () =>
-      subirArchivoContenido({
-        file: archivo!,
-        autor: autor.trim() || "Desconocido",
-        tipo,
-      }),
+      subirArchivo({ file: archivo!, autor: autor.trim() || "Desconocido", tipo }),
   });
 
-  const resultado = subida.data;
-  const duplicado = resultado && esRespuestaDuplicado(resultado) ? resultado : null;
-  const exitoso = resultado && !esRespuestaDuplicado(resultado) ? resultado : null;
+  const respuesta = subida.data;
+  const duplicado = respuesta && esDuplicado(respuesta) ? respuesta : null;
+  const exito = respuesta && !esDuplicado(respuesta) ? respuesta : null;
 
   function reset() {
     setArchivo(null);
@@ -96,7 +82,7 @@ function SubirArchivo() {
           </p>
         </header>
 
-        {!resultado && (
+        {!respuesta && (
           <section
             className="rounded-2xl border border-border p-6"
             style={{ backgroundColor: "var(--surface-elevated)" }}
@@ -124,11 +110,8 @@ function SubirArchivo() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="autor"
-                  className="text-xs uppercase tracking-widest text-muted-foreground"
-                >
-                  Autor (opcional)
+                <label htmlFor="autor" className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Autor
                 </label>
                 <input
                   id="autor"
@@ -140,10 +123,7 @@ function SubirArchivo() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="tipo"
-                  className="text-xs uppercase tracking-widest text-muted-foreground"
-                >
+                <label htmlFor="tipo" className="text-xs uppercase tracking-widest text-muted-foreground">
                   Tipo
                 </label>
                 <select
@@ -164,7 +144,7 @@ function SubirArchivo() {
             {errorLocal && <p className="mt-3 text-sm text-destructive">{errorLocal}</p>}
             {subida.isError && (
               <p className="mt-3 text-sm text-destructive">
-                {subida.error.message || "No se pudo subir el archivo."}
+                {(subida.error as Error).message || "No se pudo subir el archivo."}
               </p>
             )}
 
@@ -186,37 +166,36 @@ function SubirArchivo() {
         {duplicado && (
           <section className="flex flex-col gap-4">
             <div
-              className="flex items-center gap-3 rounded-2xl border p-5"
+              className="rounded-2xl border p-5"
               style={{
-                borderColor: "var(--confianza-media)",
-                backgroundColor: "color-mix(in oklab, var(--confianza-media) 12%, transparent)",
+                borderColor: "var(--confianza-baja)",
+                backgroundColor: "color-mix(in oklab, var(--confianza-baja) 12%, transparent)",
               }}
             >
-              <span className="text-2xl" aria-hidden>
-                ⚠️
-              </span>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold" style={{ color: "var(--confianza-media)" }}>
-                  Documento duplicado
-                </span>
-                <span className="text-xs text-muted-foreground">{duplicado.mensaje}</span>
+              <p className="text-sm font-semibold" style={{ color: "var(--confianza-baja)" }}>
+                ⚠️ La carga no se realizó: documento duplicado
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{duplicado.mensaje}</p>
+              <div className="mt-4 rounded-xl border border-border bg-card p-4">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Documento existente
+                </p>
+                <p className="mt-1 text-base font-semibold">
+                  {duplicado.documento_original.titulo?.trim() ||
+                    `Documento #${duplicado.documento_original.id}`}
+                </p>
+                <p className="mt-1 text-sm" style={{ color: "var(--confianza-baja)" }}>
+                  Coincidencia: {porcentaje(duplicado.similitud)}%
+                </p>
+                <Link
+                  to="/documento/$id"
+                  params={{ id: String(duplicado.documento_original.id) }}
+                  className="mt-3 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Ver el documento existente →
+                </Link>
               </div>
             </div>
-
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                Documento original
-              </p>
-              <p className="mt-1 text-lg font-semibold text-primary">
-                {duplicado.documento_original.titulo ??
-                  `Documento #${duplicado.documento_original.id}`}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                ID {duplicado.documento_original.id} · {Math.round(duplicado.similitud * 100)}% de
-                similitud con el archivo que subiste
-              </p>
-            </div>
-
             <button
               type="button"
               onClick={reset}
@@ -227,50 +206,32 @@ function SubirArchivo() {
           </section>
         )}
 
-        {exitoso && (
+        {exito && (
           <section className="flex flex-col gap-4">
             <div
               className="flex items-center gap-3 rounded-2xl border p-5"
               style={{
-                borderColor: colorConfianza(
-                  exitoso.clasificacion.requiere_revision,
-                  exitoso.clasificacion.probabilidad,
-                ),
-                backgroundColor: `color-mix(in oklab, ${colorConfianza(
-                  exitoso.clasificacion.requiere_revision,
-                  exitoso.clasificacion.probabilidad,
-                )} 12%, transparent)`,
+                borderColor: "var(--confianza-alta)",
+                backgroundColor: "color-mix(in oklab, var(--confianza-alta) 12%, transparent)",
               }}
             >
               <span className="text-2xl" aria-hidden>
-                {exitoso.clasificacion.requiere_revision ? "🔎" : "✅"}
+                ✅
               </span>
               <div className="flex flex-col">
-                <span
-                  className="text-sm font-semibold"
-                  style={{
-                    color: colorConfianza(
-                      exitoso.clasificacion.requiere_revision,
-                      exitoso.clasificacion.probabilidad,
-                    ),
-                  }}
-                >
-                  {exitoso.clasificacion.requiere_revision
-                    ? "Contenido guardado — confianza baja, revisar categoría"
-                    : "Contenido guardado"}
+                <span className="text-sm font-semibold" style={{ color: "var(--confianza-alta)" }}>
+                  Contenido guardado
                 </span>
-                <span className="text-xs text-muted-foreground">ID {exitoso.metadatos.id}</span>
+                <span className="text-xs text-muted-foreground">ID {exito.metadatos.id}</span>
               </div>
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="grid gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Categoría
-                  </p>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">Categoría</p>
                   <p className="mt-1 text-lg font-semibold text-primary">
-                    {exitoso.clasificacion.categoria}
+                    {exito.clasificacion.categoria}
                   </p>
                 </div>
 
@@ -279,19 +240,27 @@ function SubirArchivo() {
                     <p className="text-xs uppercase tracking-widest text-muted-foreground">
                       Probabilidad
                     </p>
-                    <span className="text-sm font-semibold">
-                      {Math.round(exitoso.clasificacion.probabilidad * 100)}%
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: colorConfianza(exito.clasificacion.probabilidad) }}
+                    >
+                      {porcentaje(exito.clasificacion.probabilidad)}%
                     </span>
                   </div>
                   <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
                     <div
                       className="h-full rounded-full"
                       style={{
-                        width: `${exitoso.clasificacion.probabilidad * 100}%`,
-                        backgroundImage: "var(--gradient-honey)",
+                        width: `${porcentaje(exito.clasificacion.probabilidad)}%`,
+                        backgroundColor: colorConfianza(exito.clasificacion.probabilidad),
                       }}
                     />
                   </div>
+                  {exito.clasificacion.requiere_revision && (
+                    <p className="mt-2 text-xs" style={{ color: "var(--confianza-media)" }}>
+                      ⚠️ Confianza baja: conviene revisar la categoría manualmente.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -299,10 +268,10 @@ function SubirArchivo() {
                     Palabras clave
                   </p>
                   <ul className="mt-2 flex flex-wrap gap-2">
-                    {exitoso.clasificacion.palabras_clave.length === 0 && (
+                    {(exito.clasificacion.palabras_clave ?? []).length === 0 && (
                       <li className="text-sm text-muted-foreground">Sin palabras clave</li>
                     )}
-                    {exitoso.clasificacion.palabras_clave.map((p) => (
+                    {(exito.clasificacion.palabras_clave ?? []).map((p) => (
                       <li
                         key={p}
                         className="rounded-full border border-border bg-secondary px-3 py-1 text-sm"
@@ -317,50 +286,44 @@ function SubirArchivo() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
                     Resumen automático
                   </p>
-                  <p className="mt-2 text-sm text-foreground whitespace-pre-line">
-                    {exitoso.clasificacion.resumen || "Sin resumen disponible."}
+                  <p className="mt-2 text-sm whitespace-pre-line">
+                    {exito.clasificacion.resumen?.trim() || "El backend no devolvió resumen."}
                   </p>
                 </div>
 
-                {exitoso.contenido_relacionado.length > 0 && (
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                      Documentos relacionados
-                    </p>
-                    <ul className="mt-2 flex flex-col gap-1.5">
-                      {exitoso.contenido_relacionado.map((doc) => (
-                        <li
-                          key={doc.id}
-                          className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm"
-                        >
-                          <span className="truncate">{doc.titulo ?? `Documento #${doc.id}`}</span>
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {Math.round(doc.similitud * 100)}% similar
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
                 <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+                  {exito.metadatos.titulo && (
+                    <span>
+                      Título: <strong className="text-foreground">{exito.metadatos.titulo}</strong>
+                    </span>
+                  )}
                   <span>
                     Autor:{" "}
                     <strong className="text-foreground">
-                      {exitoso.metadatos.autor ?? "Desconocido"}
+                      {exito.metadatos.autor ?? "Desconocido"}
                     </strong>
                   </span>
                   <span>
                     Tipo:{" "}
                     <strong className="text-foreground">
-                      {exitoso.metadatos.tipo_contenido ?? "—"}
+                      {exito.metadatos.tipo_contenido ?? tipo}
                     </strong>
+                  </span>
+                  <span>
+                    Formato:{" "}
+                    <strong className="text-foreground">
+                      {exito.metadatos.formato_archivo.toUpperCase()}
+                    </strong>
+                  </span>
+                  <span>
+                    Palabras:{" "}
+                    <strong className="text-foreground">{exito.contenido.total_palabras}</strong>
                   </span>
                 </div>
 
-                {exitoso.metadatos.url_archivo && (
+                {exito.metadatos.url_archivo && (
                   <a
-                    href={exitoso.metadatos.url_archivo}
+                    href={exito.metadatos.url_archivo}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="self-start text-sm font-medium text-primary underline-offset-4 hover:underline"
@@ -371,13 +334,46 @@ function SubirArchivo() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={reset}
-              className="self-start rounded-xl border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
-            >
-              Subir otro archivo
-            </button>
+            {(exito.contenido_relacionado ?? []).length > 0 && (
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Contenido relacionado
+                </p>
+                <ul className="mt-3 flex flex-col gap-2 text-sm">
+                  {(exito.contenido_relacionado ?? []).map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3">
+                      <Link
+                        to="/documento/$id"
+                        params={{ id: String(r.id) }}
+                        className="text-primary underline-offset-4 hover:underline"
+                      >
+                        {r.titulo?.trim() || `Documento #${r.id}`}
+                      </Link>
+                      <span className="text-xs text-muted-foreground">
+                        {porcentaje(r.similitud)}% similar
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={reset}
+                className="rounded-xl border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+              >
+                Subir otro archivo
+              </button>
+              <Link
+                to="/documento/$id"
+                params={{ id: String(exito.metadatos.id) }}
+                className="rounded-xl border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-primary"
+              >
+                Ver detalle guardado →
+              </Link>
+            </div>
           </section>
         )}
       </div>

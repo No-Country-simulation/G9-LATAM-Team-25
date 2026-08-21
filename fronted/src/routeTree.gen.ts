@@ -9,24 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as BuscarRouteImport } from './routes/buscar'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SubirRouteImport } from './routes/subir'
-import { Route as ApiBuscarRouteImport } from './routes/api/buscar'
-import { Route as ApiClasificarRouteImport } from './routes/api/clasificar'
-import { Route as ApiContenidoRouteImport } from './routes/api/contenido'
-import { Route as ApiContenidoArchivoRouteImport } from './routes/api/contenido-archivo'
-import { Route as ApiContenidoDocumentoIdRouteImport } from './routes/api/contenido.$documentoId'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as BuscarRouteImport } from './routes/buscar'
+import { Route as BibliotecaRouteImport } from './routes/biblioteca'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as DocumentoIdRouteImport } from './routes/documento.$id'
+import { Route as ApiBackendSplatRouteImport } from './routes/api/backend/$'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuscarRoute = BuscarRouteImport.update({
-  id: '/buscar',
-  path: '/buscar',
+const SubirRoute = SubirRouteImport.update({
+  id: '/subir',
+  path: '/subir',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -34,132 +27,107 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SubirRoute = SubirRouteImport.update({
-  id: '/subir',
-  path: '/subir',
+const BuscarRoute = BuscarRouteImport.update({
+  id: '/buscar',
+  path: '/buscar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiBuscarRoute = ApiBuscarRouteImport.update({
-  id: '/api/buscar',
-  path: '/api/buscar',
+const BibliotecaRoute = BibliotecaRouteImport.update({
+  id: '/biblioteca',
+  path: '/biblioteca',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiClasificarRoute = ApiClasificarRouteImport.update({
-  id: '/api/clasificar',
-  path: '/api/clasificar',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiContenidoRoute = ApiContenidoRouteImport.update({
-  id: '/api/contenido',
-  path: '/api/contenido',
+const DocumentoIdRoute = DocumentoIdRouteImport.update({
+  id: '/documento/$id',
+  path: '/documento/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiContenidoArchivoRoute = ApiContenidoArchivoRouteImport.update({
-  id: '/api/contenido-archivo',
-  path: '/api/contenido-archivo',
+const ApiBackendSplatRoute = ApiBackendSplatRouteImport.update({
+  id: '/api/backend/$',
+  path: '/api/backend/$',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ApiContenidoDocumentoIdRoute = ApiContenidoDocumentoIdRouteImport.update({
-  id: '/$documentoId',
-  path: '/$documentoId',
-  getParentRoute: () => ApiContenidoRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/biblioteca': typeof BibliotecaRoute
   '/buscar': typeof BuscarRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subir': typeof SubirRoute
-  '/api/buscar': typeof ApiBuscarRoute
-  '/api/clasificar': typeof ApiClasificarRoute
-  '/api/contenido': typeof ApiContenidoRouteWithChildren
-  '/api/contenido-archivo': typeof ApiContenidoArchivoRoute
-  '/api/contenido/$documentoId': typeof ApiContenidoDocumentoIdRoute
+  '/documento/$id': typeof DocumentoIdRoute
+  '/api/backend/$': typeof ApiBackendSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/biblioteca': typeof BibliotecaRoute
   '/buscar': typeof BuscarRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subir': typeof SubirRoute
-  '/api/buscar': typeof ApiBuscarRoute
-  '/api/clasificar': typeof ApiClasificarRoute
-  '/api/contenido': typeof ApiContenidoRouteWithChildren
-  '/api/contenido-archivo': typeof ApiContenidoArchivoRoute
-  '/api/contenido/$documentoId': typeof ApiContenidoDocumentoIdRoute
+  '/documento/$id': typeof DocumentoIdRoute
+  '/api/backend/$': typeof ApiBackendSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/biblioteca': typeof BibliotecaRoute
   '/buscar': typeof BuscarRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/subir': typeof SubirRoute
-  '/api/buscar': typeof ApiBuscarRoute
-  '/api/clasificar': typeof ApiClasificarRoute
-  '/api/contenido': typeof ApiContenidoRouteWithChildren
-  '/api/contenido-archivo': typeof ApiContenidoArchivoRoute
-  '/api/contenido/$documentoId': typeof ApiContenidoDocumentoIdRoute
+  '/documento/$id': typeof DocumentoIdRoute
+  '/api/backend/$': typeof ApiBackendSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/biblioteca'
     | '/buscar'
     | '/sitemap.xml'
     | '/subir'
-    | '/api/buscar'
-    | '/api/clasificar'
-    | '/api/contenido'
-    | '/api/contenido-archivo'
-    | '/api/contenido/$documentoId'
+    | '/documento/$id'
+    | '/api/backend/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/biblioteca'
     | '/buscar'
     | '/sitemap.xml'
     | '/subir'
-    | '/api/buscar'
-    | '/api/clasificar'
-    | '/api/contenido'
-    | '/api/contenido-archivo'
-    | '/api/contenido/$documentoId'
+    | '/documento/$id'
+    | '/api/backend/$'
   id:
     | '__root__'
     | '/'
+    | '/biblioteca'
     | '/buscar'
     | '/sitemap.xml'
     | '/subir'
-    | '/api/buscar'
-    | '/api/clasificar'
-    | '/api/contenido'
-    | '/api/contenido-archivo'
-    | '/api/contenido/$documentoId'
+    | '/documento/$id'
+    | '/api/backend/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BibliotecaRoute: typeof BibliotecaRoute
   BuscarRoute: typeof BuscarRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SubirRoute: typeof SubirRoute
-  ApiBuscarRoute: typeof ApiBuscarRoute
-  ApiClasificarRoute: typeof ApiClasificarRoute
-  ApiContenidoRoute: typeof ApiContenidoRouteWithChildren
-  ApiContenidoArchivoRoute: typeof ApiContenidoArchivoRoute
+  DocumentoIdRoute: typeof DocumentoIdRoute
+  ApiBackendSplatRoute: typeof ApiBackendSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buscar': {
-      id: '/buscar'
-      path: '/buscar'
-      fullPath: '/buscar'
-      preLoaderRoute: typeof BuscarRouteImport
+    '/subir': {
+      id: '/subir'
+      path: '/subir'
+      fullPath: '/subir'
+      preLoaderRoute: typeof SubirRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -169,72 +137,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/subir': {
-      id: '/subir'
-      path: '/subir'
-      fullPath: '/subir'
-      preLoaderRoute: typeof SubirRouteImport
+    '/buscar': {
+      id: '/buscar'
+      path: '/buscar'
+      fullPath: '/buscar'
+      preLoaderRoute: typeof BuscarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/buscar': {
-      id: '/api/buscar'
-      path: '/api/buscar'
-      fullPath: '/api/buscar'
-      preLoaderRoute: typeof ApiBuscarRouteImport
+    '/biblioteca': {
+      id: '/biblioteca'
+      path: '/biblioteca'
+      fullPath: '/biblioteca'
+      preLoaderRoute: typeof BibliotecaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/clasificar': {
-      id: '/api/clasificar'
-      path: '/api/clasificar'
-      fullPath: '/api/clasificar'
-      preLoaderRoute: typeof ApiClasificarRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/contenido': {
-      id: '/api/contenido'
-      path: '/api/contenido'
-      fullPath: '/api/contenido'
-      preLoaderRoute: typeof ApiContenidoRouteImport
+    '/documento/$id': {
+      id: '/documento/$id'
+      path: '/documento/$id'
+      fullPath: '/documento/$id'
+      preLoaderRoute: typeof DocumentoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/contenido-archivo': {
-      id: '/api/contenido-archivo'
-      path: '/api/contenido-archivo'
-      fullPath: '/api/contenido-archivo'
-      preLoaderRoute: typeof ApiContenidoArchivoRouteImport
+    '/api/backend/$': {
+      id: '/api/backend/$'
+      path: '/api/backend/$'
+      fullPath: '/api/backend/$'
+      preLoaderRoute: typeof ApiBackendSplatRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/api/contenido/$documentoId': {
-      id: '/api/contenido/$documentoId'
-      path: '/$documentoId'
-      fullPath: '/api/contenido/$documentoId'
-      preLoaderRoute: typeof ApiContenidoDocumentoIdRouteImport
-      parentRoute: typeof ApiContenidoRoute
     }
   }
 }
 
-interface ApiContenidoRouteChildren {
-  ApiContenidoDocumentoIdRoute: typeof ApiContenidoDocumentoIdRoute
-}
-
-const ApiContenidoRouteChildren: ApiContenidoRouteChildren = {
-  ApiContenidoDocumentoIdRoute: ApiContenidoDocumentoIdRoute,
-}
-
-const ApiContenidoRouteWithChildren = ApiContenidoRoute._addFileChildren(
-  ApiContenidoRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BibliotecaRoute: BibliotecaRoute,
   BuscarRoute: BuscarRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SubirRoute: SubirRoute,
-  ApiBuscarRoute: ApiBuscarRoute,
-  ApiClasificarRoute: ApiClasificarRoute,
-  ApiContenidoRoute: ApiContenidoRouteWithChildren,
-  ApiContenidoArchivoRoute: ApiContenidoArchivoRoute,
+  DocumentoIdRoute: DocumentoIdRoute,
+  ApiBackendSplatRoute: ApiBackendSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -3,10 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 import logo from "@/assets/honeyguard-logo.png";
-import {
-  clasificarTextoContenido,
-  type RespuestaClasificacionTexto,
-} from "@/lib/contenido-api";
+import { clasificarTexto, colorConfianza, porcentaje } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,13 +30,11 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [texto, setTexto] = useState("");
 
-  const clasificacion = useMutation<RespuestaClasificacionTexto, Error>({
-    mutationFn: () => clasificarTextoContenido({ texto: texto.trim(), top_n_palabras_clave: 8 }),
+  const clasificacion = useMutation({
+    mutationFn: () => clasificarTexto(texto.trim()),
   });
 
-  function enviarClasificacion() {
-    if (texto.trim().length > 0) clasificacion.mutate();
-  }
+  const resultado = clasificacion.data;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -61,15 +56,22 @@ function Index() {
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/subir"
-              className="rounded-xl border border-border px-5 py-2 text-sm font-medium hover:border-primary"
+              className="rounded-xl px-5 py-2 text-sm font-semibold text-primary-foreground"
+              style={{ backgroundImage: "var(--gradient-honey)" }}
             >
-              Subir archivo (.pdf / .txt) →
+              Subir archivo →
             </Link>
             <Link
               to="/buscar"
               className="rounded-xl border border-border px-5 py-2 text-sm font-medium hover:border-primary"
             >
-              Buscar contenidos →
+              Buscar contenidos
+            </Link>
+            <Link
+              to="/biblioteca"
+              className="rounded-xl border border-border px-5 py-2 text-sm font-medium hover:border-primary"
+            >
+              Biblioteca
             </Link>
           </div>
         </header>
@@ -78,48 +80,41 @@ function Index() {
           className="rounded-2xl border border-border p-6"
           style={{ backgroundColor: "var(--surface-elevated)" }}
         >
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-foreground">Clasificar texto</h2>
-            <p className="text-sm text-muted-foreground">
-              Pega texto directamente y HoneyGuard lo clasificará con el modelo de Machine Learning
-              del backend, sin necesidad de cargar un archivo.
-            </p>
-          </div>
+          <h2 className="text-lg font-semibold">Clasificar texto</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pega un fragmento y el modelo devuelve categoría, probabilidad y palabras clave. Este
+            paso no guarda nada: es solo inferencia.
+          </p>
 
           <textarea
             value={texto}
-            onChange={(event) => {
-              setTexto(event.target.value);
-              if (clasificacion.isSuccess || clasificacion.isError) clasificacion.reset();
-            }}
-            rows={8}
-            placeholder="Pega aquí documentación, apuntes, un artículo o cualquier texto técnico…"
-            className="mt-5 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+            onChange={(e) => setTexto(e.target.value)}
+            rows={6}
+            placeholder="Pega aquí tu documentación, apunte o artículo…"
+            className="mt-4 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
-
-          {clasificacion.isError && (
-            <p className="mt-3 text-sm text-destructive">
-              {clasificacion.error.message || "No se pudo clasificar el texto."}
-            </p>
-          )}
 
           <button
             type="button"
-            onClick={enviarClasificacion}
             disabled={!texto.trim() || clasificacion.isPending}
+            onClick={() => clasificacion.mutate()}
             className="mt-4 w-full rounded-xl px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
             style={{ backgroundImage: "var(--gradient-honey)" }}
           >
-            {clasificacion.isPending ? "Clasificando…" : "Clasificar texto"}
+            {clasificacion.isPending ? "Clasificando…" : "Clasificar"}
           </button>
 
-          {clasificacion.data && (
-            <div className="mt-6 grid gap-4 rounded-2xl border border-border bg-card p-5">
+          {clasificacion.isError && (
+            <p className="mt-3 text-sm text-destructive">
+              {(clasificacion.error as Error).message}
+            </p>
+          )}
+
+          {resultado && (
+            <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
               <div>
                 <p className="text-xs uppercase tracking-widest text-muted-foreground">Categoría</p>
-                <p className="mt-1 text-xl font-semibold text-primary">
-                  {clasificacion.data.categoria}
-                </p>
+                <p className="mt-1 text-lg font-semibold text-primary">{resultado.categoria}</p>
               </div>
 
               <div>
@@ -127,16 +122,19 @@ function Index() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
                     Probabilidad
                   </p>
-                  <span className="text-sm font-semibold">
-                    {Math.round(clasificacion.data.probabilidad * 100)}%
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: colorConfianza(resultado.probabilidad) }}
+                  >
+                    {porcentaje(resultado.probabilidad)}%
                   </span>
                 </div>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
                   <div
                     className="h-full rounded-full"
                     style={{
-                      width: `${clasificacion.data.probabilidad * 100}%`,
-                      backgroundImage: "var(--gradient-honey)",
+                      width: `${porcentaje(resultado.probabilidad)}%`,
+                      backgroundColor: colorConfianza(resultado.probabilidad),
                     }}
                   />
                 </div>
@@ -146,21 +144,30 @@ function Index() {
                 <p className="text-xs uppercase tracking-widest text-muted-foreground">
                   Palabras clave
                 </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {clasificacion.data.palabras_clave.map((palabra) => (
-                    <span
-                      key={palabra}
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {resultado.palabras_clave.length === 0 && (
+                    <li className="text-sm text-muted-foreground">Sin palabras clave</li>
+                  )}
+                  {resultado.palabras_clave.map((p) => (
+                    <li
+                      key={p}
                       className="rounded-full border border-border bg-secondary px-3 py-1 text-sm"
                     >
-                      #{palabra}
-                    </span>
+                      #{p}
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
 
-              {clasificacion.data.requiere_revision && (
-                <p className="text-sm text-muted-foreground">
-                  La confianza del modelo es baja; conviene revisar manualmente la categoría.
+              {resultado.requiere_revision && (
+                <p
+                  className="rounded-xl border px-4 py-3 text-sm"
+                  style={{
+                    borderColor: "var(--confianza-media)",
+                    color: "var(--confianza-media)",
+                  }}
+                >
+                  ⚠️ La confianza es baja: conviene revisar la categoría manualmente.
                 </p>
               )}
             </div>
