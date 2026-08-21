@@ -1,2 +1,17 @@
+# Entornos virtuales y dependencias de código
+venv/
+backend/venv/
+node_modules/
+front-lovable/node_modules/
+front-lovable/.output/
+front-lovable/.tanstack/
+__pycache__/
+*.pyc
+
+# Variables de entorno y credenciales de seguridad
 .env
-C:\Users\luisf\Videos\Documentos\G9-LATAM-Team-25\backend\oci_api_key.pem
+backend/.env
+*.pem
+
+# Modelos locales pesados (ya los estamos leyendo desde OCI)
+*.pkl

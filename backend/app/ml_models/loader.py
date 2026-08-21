@@ -4,6 +4,9 @@ import os
 import logging
 import joblib
 import numpy as np
+import io
+import requests
+from functools import lru_cache
 
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -13,309 +16,126 @@ from app.utils.texto_visible import extraer_texto_visible
 
 logger = logging.getLogger(__name__)
 
-
 # ============================================================
-# RUTAS DE LOS MODELOS
-# ============================================================
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-MODEL_PATH = os.path.join(BASE_DIR, "modelo.pkl")
-VECTORIZER_PATH = os.path.join(BASE_DIR, "vectorizer.pkl")
-
-
-# ============================================================
-# CARGA DE MODELOS
+# CARGA DE MODELOS DESDE OCI (LAZY LOADING)
 # ============================================================
 
+MODEL_URL = os.getenv("MODEL_URL")
+VECTORIZER_URL = os.getenv("VECTORIZER_URL")
+
+@lru_cache()
 def load_model():
     """
-    Carga el modelo y el vectorizador previamente entrenados.
-
-    Returns:
-        tuple:
-            (modelo, vectorizador)
-
-        Si ocurre un error, retorna:
-            (None, None)
+    Descarga y carga en memoria el modelo y el vectorizador desde OCI.
+    Se ejecuta solo la primera vez gracias a @lru_cache.
     """
-
     try:
-        modelo = joblib.load(MODEL_PATH)
-        vectorizador = joblib.load(VECTORIZER_PATH)
+        if not MODEL_URL or not VECTORIZER_URL:
+            logger.error("MODEL_URL o VECTORIZER_URL no están configuradas.")
+            return None, None
+        
+        logger.info("Descargando modelos desde OCI...")
+        res_model = requests.get(MODEL_URL)
+        res_model.raise_for_status()
+        modelo = joblib.load(io.BytesIO(res_model.content))
 
-        logger.info(
-            "Modelo y vectorizador cargados exitosamente."
-        )
+        res_vec = requests.get(VECTORIZER_URL)
+        res_vec.raise_for_status()
+        vectorizador = joblib.load(io.BytesIO(res_vec.content))
 
+        logger.info("Modelos cargados exitosamente desde OCI.")
         return modelo, vectorizador
 
-    except FileNotFoundError as e:
-
-        logger.error(
-            f"Error cargando los modelos: {e}. "
-            "Asegúrate de que los archivos .pkl existan."
-        )
-
-        return None, None
-
     except Exception as e:
-
-        logger.error(
-            f"Error inesperado cargando los modelos: {e}"
-        )
-
+        logger.error(f"Error inesperado cargando los modelos: {e}")
         return None, None
 
-
-# ============================================================
-# CARGA ÚNICA
-# ============================================================
-
-modelo, vectorizador = load_model()
 
 # ============================================================
 # PREDECIR CATEGORÍA
 # ============================================================
 
-def _extraer_palabras_clave_de_vector(
-    texto_vectorizado,
-    top_n: int = 8,
-) -> list[str]:
-    """
-    Extrae las palabras clave de un documento ya vectorizado,
-    tomando los términos con mayor peso TF-IDF según el
-    vectorizador ya entrenado (vectorizer.pkl).
-
-    No entrena nada nuevo ni modifica el vectorizador: es una
-    lectura de los pesos que el propio TF-IDF ya calculó para
-    este documento.
-
-    Args:
-        texto_vectorizado:
-            Vector disperso (sparse) devuelto por
-            ``vectorizador.transform([...])``.
-        top_n:
-            Cantidad máxima de palabras clave a devolver.
-
-    Returns:
-        list[str]:
-            Palabras clave ordenadas de mayor a menor peso TF-IDF.
-            Lista vacía si no hay términos o si ocurre un error.
-    """
-
+def _extraer_palabras_clave_de_vector(texto_vectorizado, top_n: int = 8) -> list[str]:
+    _, vectorizador = load_model()
     if vectorizador is None:
         return []
 
     try:
         nombres_terminos = vectorizador.get_feature_names_out()
         fila = texto_vectorizado.tocoo()
-
         pares_indice_peso = list(zip(fila.col, fila.data))
 
         if not pares_indice_peso:
             return []
 
         pares_indice_peso.sort(key=lambda par: par[1], reverse=True)
-
-        return [
-            str(nombres_terminos[indice])
-            for indice, _peso in pares_indice_peso[:top_n]
-        ]
-
+        return [str(nombres_terminos[indice]) for indice, _peso in pares_indice_peso[:top_n]]
     except Exception as e:
-        logger.error(
-            f"Error extrayendo palabras clave: {e}"
-        )
+        logger.error(f"Error extrayendo palabras clave: {e}")
         return []
 
 
-def predecir_categoria(
-    texto: str,
-    top_n_palabras_clave: int = 8,
-) -> tuple[str | None, float | None, list[str]]:
-    """
-    Predice la categoría de un documento utilizando el modelo de
-    clasificación y el vectorizador TF-IDF, y de paso obtiene la
-    probabilidad de la predicción y las palabras clave del documento.
-
-    Se calculan las tres cosas juntas porque las tres dependen del
-    mismo vector TF-IDF ya calculado; separarlas en tres funciones
-    obligaría a vectorizar el texto tres veces.
-
-    Args:
-        texto:
-            Texto completo del documento.
-        top_n_palabras_clave:
-            Cantidad máxima de palabras clave a devolver.
-
-    Returns:
-        tuple:
-            (categoria, probabilidad, palabras_clave)
-
-        Si el texto está vacío, los modelos no están disponibles
-        o ocurre un error durante la predicción, devuelve:
-            (None, None, [])
-    """
+def predecir_categoria(texto: str, top_n_palabras_clave: int = 8) -> tuple[str | None, float | None, list[str]]:
+    modelo, vectorizador = load_model()
 
     if not texto:
-        logger.warning(
-            "No se puede predecir la categoría: "
-            "el texto está vacío."
-        )
+        logger.warning("No se puede predecir la categoría: el texto está vacío.")
         return None, None, []
 
     if modelo is None or vectorizador is None:
-        logger.error(
-            "No se puede realizar la predicción porque "
-            "el modelo o vectorizador no fueron cargados."
-        )
+        logger.error("No se puede realizar la predicción porque el modelo o vectorizador no fueron cargados.")
         return None, None, []
 
     try:
-        # ====================================================
-        # 1. Extraer únicamente el texto visible
-        # ====================================================
-
         texto_limpio = extraer_texto_visible(texto)
-
         if not texto_limpio.strip():
-            logger.warning(
-                "No se encontró texto visible para clasificar."
-            )
+            logger.warning("No se encontró texto visible para clasificar.")
             return None, None, []
 
-        # ====================================================
-        # 2. Transformar el texto con el TF-IDF entrenado
-        # ====================================================
-
-        texto_vectorizado = vectorizador.transform(
-            [texto_limpio]
-        )
-
-        # ====================================================
-        # 3. Realizar predicción
-        # ====================================================
-
-        prediccion = modelo.predict(
-            texto_vectorizado
-        )
-
+        texto_vectorizado = vectorizador.transform([texto_limpio])
+        prediccion = modelo.predict(texto_vectorizado)
         categoria = str(prediccion[0])
 
-        # ====================================================
-        # 4. Obtener la probabilidad de la clase predicha
-        # ====================================================
-        # El modelo cargado (modelo.pkl) es un LogisticRegression,
-        # que soporta predict_proba. Si en algún momento se
-        # reemplaza por un modelo sin predict_proba, se avisa por
-        # log en vez de fallar silenciosamente.
-
         if hasattr(modelo, "predict_proba"):
-            probabilidades = modelo.predict_proba(
-                texto_vectorizado
-            )[0]
-            indice_clase = list(modelo.classes_).index(
-                prediccion[0]
-            )
+            probabilidades = modelo.predict_proba(texto_vectorizado)[0]
+            indice_clase = list(modelo.classes_).index(prediccion[0])
             probabilidad = float(probabilidades[indice_clase])
         else:
-            logger.error(
-                "El modelo cargado no soporta predict_proba(); "
-                "no se puede calcular la probabilidad."
-            )
+            logger.error("El modelo cargado no soporta predict_proba(); no se puede calcular la probabilidad.")
             probabilidad = None
 
-        # ====================================================
-        # 5. Obtener palabras clave del mismo vector TF-IDF
-        # ====================================================
+        palabras_clave = _extraer_palabras_clave_de_vector(texto_vectorizado, top_n=top_n_palabras_clave)
 
-        palabras_clave = _extraer_palabras_clave_de_vector(
-            texto_vectorizado,
-            top_n=top_n_palabras_clave,
-        )
-
-        logger.info(
-            f"Categoría predicha correctamente: {categoria} "
-            f"(probabilidad={probabilidad})"
-        )
-
+        logger.info(f"Categoría predicha correctamente: {categoria} (probabilidad={probabilidad})")
         return categoria, probabilidad, palabras_clave
 
     except Exception as e:
-        logger.error(
-            f"Error prediciendo categoría: {e}"
-        )
+        logger.error(f"Error prediciendo categoría: {e}")
         return None, None, []
-    
+
 # ============================================================
 # CALCULAR SIMILITUD PARA RECOMENDACIONES
 # ============================================================
 
-def calcular_similitud_recomendaciones(
-    texto_nuevo: str,
-    documentos_db: list,
-    umbral: float = 0.80
-) -> list[tuple[int, float]]:
-    """
-    Busca documentos similares al texto nuevo utilizando
-    el vectorizador TF-IDF previamente entrenado.
-
-    documentos_db:
-
-    [
-        {
-            "id": 12,
-            "texto": "Contenido del documento..."
-        },
-        ...
-    ]
-
-    Returns:
-        Lista de tuplas (id, similitud) de los documentos que
-        superan el umbral, ordenada de mayor a menor similitud.
-    """
+def calcular_similitud_recomendaciones(texto_nuevo: str, documentos_db: list, umbral: float = 0.80) -> list[tuple[int, float]]:
+    modelo, vectorizador = load_model()
 
     if not documentos_db:
         return []
 
     if vectorizador is None:
-        logger.error(
-            "No se puede calcular similitud: "
-            "el vectorizador no fue cargado."
-        )
+        logger.error("No se puede calcular similitud: el vectorizador no fue cargado.")
         return []
 
     try:
+        textos_existentes = [doc["texto"] for doc in documentos_db]
+        ids_existentes = [doc["id"] for doc in documentos_db]
 
-        textos_existentes = [
-            doc["texto"]
-            for doc in documentos_db
-        ]
+        vector_nuevo = vectorizador.transform([texto_nuevo])
+        matriz_documentos = vectorizador.transform(textos_existentes)
 
-        ids_existentes = [
-            doc["id"]
-            for doc in documentos_db
-        ]
+        similitudes = cosine_similarity(vector_nuevo, matriz_documentos).flatten()
 
-        # Transformar el texto nuevo utilizando
-        # el vectorizador previamente entrenado.
-        vector_nuevo = vectorizador.transform(
-            [texto_nuevo]
-        )
-
-        # Transformar los documentos existentes
-        matriz_documentos = vectorizador.transform(
-            textos_existentes
-        )
-
-        # Calcular similitud coseno
-        similitudes = cosine_similarity(
-            vector_nuevo,
-            matriz_documentos
-        ).flatten()
-
-        # Obtener documentos que superan el umbral
         similares = [
             (ids_existentes[i], float(score))
             for i, score in enumerate(similitudes)
@@ -323,15 +143,10 @@ def calcular_similitud_recomendaciones(
         ]
 
         similares.sort(key=lambda par: par[1], reverse=True)
-
         return similares
 
     except Exception as e:
-
-        logger.error(
-            f"Error calculando similitud para recomendaciones: {e}"
-        )
-
+        logger.error(f"Error calculando similitud para recomendaciones: {e}")
         return []
 
 
@@ -339,117 +154,37 @@ def calcular_similitud_recomendaciones(
 # CHEQUEAR DOCUMENTO DUPLICADO
 # ============================================================
 
-def chequear_duplicado(
-    texto_crudo: str,
-    documentos_db: list,
-    umbral: float = 0.80
-) -> tuple:
-    """
-    Verifica si un documento ya existe en la base de datos.
-
-    documentos_db:
-
-    [
-        {
-            "id": 12,
-            "titulo": "Doc 1",
-            "texto": "Contenido del documento..."
-        },
-        ...
-    ]
-
-    Returns:
-        (
-            es_duplicado: bool,
-            similitud: float,
-            id_original: int | None,
-            titulo_original: str
-        )
-    """
+def chequear_duplicado(texto_crudo: str, documentos_db: list, umbral: float = 0.80) -> tuple:
+    modelo, vectorizador = load_model()
 
     if not documentos_db:
         return False, 0.0, None, ""
 
     if vectorizador is None:
-        logger.error(
-            "No se puede verificar duplicados: "
-            "el vectorizador no fue cargado."
-        )
-
+        logger.error("No se puede verificar duplicados: el vectorizador no fue cargado.")
         return False, 0.0, None, ""
 
     try:
+        textos_existentes = [doc["texto"] for doc in documentos_db]
+        titulos_existentes = [doc["titulo"] for doc in documentos_db]
+        ids_existentes = [doc["id"] for doc in documentos_db]
 
-        textos_existentes = [
-            doc["texto"]
-            for doc in documentos_db
-        ]
+        vector_nuevo = vectorizador.transform([texto_crudo])
+        matriz_documentos = vectorizador.transform(textos_existentes)
 
-        titulos_existentes = [
-            doc["titulo"]
-            for doc in documentos_db
-        ]
+        similitudes = cosine_similarity(vector_nuevo, matriz_documentos).flatten()
+        indice_max_similitud = np.argmax(similitudes)
+        max_similitud = float(similitudes[indice_max_similitud])
 
-        ids_existentes = [
-            doc["id"]
-            for doc in documentos_db
-        ]
-
-        # Transformar el nuevo documento
-        vector_nuevo = vectorizador.transform(
-            [texto_crudo]
-        )
-
-        # Transformar documentos existentes
-        matriz_documentos = vectorizador.transform(
-            textos_existentes
-        )
-
-        # Calcular similitud coseno
-        similitudes = cosine_similarity(
-            vector_nuevo,
-            matriz_documentos
-        ).flatten()
-
-        # Obtener índice del documento más parecido
-        indice_max_similitud = np.argmax(
-            similitudes
-        )
-
-        max_similitud = float(
-            similitudes[indice_max_similitud]
-        )
-
-        # Verificar si supera el umbral
         if max_similitud >= umbral:
+            titulo_original = titulos_existentes[indice_max_similitud]
+            id_original = ids_existentes[indice_max_similitud]
+            return True, max_similitud, id_original, titulo_original
 
-            titulo_original = titulos_existentes[
-                indice_max_similitud
-            ]
-            id_original = ids_existentes[
-                indice_max_similitud
-            ]
-
-            return (
-                True,
-                max_similitud,
-                id_original,
-                titulo_original
-            )
-
-        return (
-            False,
-            max_similitud,
-            None,
-            ""
-        )
+        return False, max_similitud, None, ""
 
     except Exception as e:
-
-        logger.error(
-            f"Error verificando documento duplicado: {e}"
-        )
-
+        logger.error(f"Error verificando documento duplicado: {e}")
         return False, 0.0, None, ""
 
 
