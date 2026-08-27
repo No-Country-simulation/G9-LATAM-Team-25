@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SiteToolbar } from "@/components/site-toolbar";
+
 
 import logo from "@/assets/honeyguard-logo.png";
 import { clasificarTexto, colorConfianza, porcentaje } from "@/lib/api";
