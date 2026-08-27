@@ -356,7 +356,7 @@ El resumen automático está cubierto con casos para segmentación, HTML/XML, ab
 Para validar el Frontend:
 
 ```bash
-cd front-lovable
+cd fronted 
 npm run lint
 npm run build
 ```
