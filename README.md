@@ -303,7 +303,7 @@ La documentación local estará disponible en <http://127.0.0.1:8000/docs>.
 En otra terminal:
 
 ```bash
-cd front-lovable
+cd fronted
 npm install
 npm run dev
 ```
@@ -337,7 +337,7 @@ G9-LATAM-Team-25/
 ├── backend/                 # API, acceso a Oracle y almacenamiento OCI
 ├── data_science/            # Datos, notebooks, procesamiento y entrenamiento
 ├── docs/                    # Arquitectura y contratos de integración
-├── front-lovable/           # Aplicación web React/TypeScript
+├── fronted/                 # Aplicación web activa React / Vite / TypeScript
 ├── shared/                  # Funciones compartidas de NLP
 ├── tests/                   # Pruebas automatizadas
 └── README.md
@@ -356,7 +356,7 @@ El resumen automático está cubierto con casos para segmentación, HTML/XML, ab
 Para validar el Frontend:
 
 ```bash
-cd fronted 
+cd front
 npm run lint
 npm run build
 ```
