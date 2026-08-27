@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import logo from "@/assets/honeyguard-logo.png";
 import { clasificarTexto, colorConfianza, porcentaje } from "@/lib/api";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { t } = useTranslation();
   const [texto, setTexto] = useState("");
 
   const clasificacion = useMutation({
@@ -39,20 +41,21 @@ function Index() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-3xl flex-col gap-10 px-6 py-14">
+        <div className="flex justify-end">
+          <SiteToolbar />
+        </div>
+
         <header className="flex flex-col items-center text-center">
           <img
             src={logo}
-            alt="Logo de HoneyGuard: un tejón abrazando un panal dorado"
+            alt={t("home.logoAlt")}
             className="h-40 w-40 rounded-3xl object-cover"
             style={{ boxShadow: "var(--honey-glow)" }}
           />
           <h1 className="mt-6 text-4xl font-bold tracking-tight">
             Honey<span className="text-primary">Guard</span>
           </h1>
-          <p className="mt-3 max-w-md text-sm text-muted-foreground">
-            Clasifica, organiza y reutiliza tu contenido técnico: documentación, artículos,
-            apuntes y tutoriales.
-          </p>
+          <p className="mt-3 max-w-md text-sm text-muted-foreground">{t("home.tagline")}</p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/subir"
@@ -120,7 +123,7 @@ function Index() {
               <div>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Probabilidad
+                    {t("home.resultProbability")}
                   </p>
                   <span
                     className="text-sm font-semibold"
@@ -142,7 +145,7 @@ function Index() {
 
               <div>
                 <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                  Palabras clave
+                  {t("home.resultKeywords")}
                 </p>
                 <ul className="mt-2 flex flex-wrap gap-2">
                   {resultado.palabras_clave.length === 0 && (

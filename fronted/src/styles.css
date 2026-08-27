@@ -1,6 +1,7 @@
-@import "tailwindcss" source(none);
-@source "../src";
+@import "tailwindcss" ;
 @import "tw-animate-css";
+
+@source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -59,6 +60,14 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-surface-elevated: var(--surface-elevated);
+  --color-confianza-alta: var(--confianza-alta);
+  --color-confianza-media: var(--confianza-media);
+  --color-confianza-baja: var(--confianza-baja);
+
+  --shadow-honey-glow: var(--honey-glow);
+  --background-image-gradient-honey: var(--gradient-honey);
 }
 
 :root {

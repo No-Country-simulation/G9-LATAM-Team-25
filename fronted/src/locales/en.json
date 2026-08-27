@@ -1,0 +1,124 @@
+{
+  "common": {
+    "backHome": "← Back to home",
+    "close": "Close",
+    "morePages": "More pages",
+    "toggleSidebar": "Toggle Sidebar",
+    "unknownAuthor": "Unknown author",
+    "documentFallback": "Document #{{id}}",
+    "connectionError": "Could not connect to the server. Check your connection and try again."
+  },
+  "errors": {
+    "uploadRejected": "The backend rejected the upload. Check the file and try again.",
+    "classifyConnection": "Could not connect to the classification service.",
+    "classifyFailed": "The text could not be classified.",
+    "searchConnection": "Could not connect to the search service.",
+    "searchFailed": "Content search was not possible.",
+    "repositoryConnection": "Could not connect to the document repository.",
+    "listFailed": "Documents could not be listed.",
+    "getFailed": "The document could not be retrieved."
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "goHome": "Go home"
+  },
+  "errorPage": {
+    "heading": "This page didn't load",
+    "description": "Something went wrong on our end. You can try refreshing or head back home.",
+    "retry": "Try again",
+    "goHome": "Go home"
+  },
+  "theme": {
+    "toggleLabel": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "selectorLabel": "Select language"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "previousLabel": "Go to previous page",
+    "next": "Next",
+    "nextLabel": "Go to next page"
+  },
+  "contentTypes": {
+    "article": "Article",
+    "documentation": "Documentation",
+    "tutorial": "Tutorial",
+    "note": "Note",
+    "research": "Research",
+    "other": "Other"
+  },
+  "home": {
+    "logoAlt": "HoneyGuard logo: a badger hugging a golden honeycomb",
+    "tagline": "Classify, organize, and reuse your technical content: documentation, articles, notes, and tutorials.",
+    "uploadLink": "Upload file (.pdf / .txt) →",
+    "searchLink": "Search content →",
+    "classifyHeading": "Classify text",
+    "classifyDescription": "Paste text directly and HoneyGuard will classify it with the backend's Machine Learning model, no file upload needed.",
+    "textareaPlaceholder": "Paste documentation, notes, an article, or any technical text here…",
+    "classifyButton": "Classify text",
+    "classifyButtonLoading": "Classifying…",
+    "classifyErrorFallback": "The text could not be classified.",
+    "resultCategory": "Category",
+    "resultProbability": "Probability",
+    "resultKeywords": "Keywords",
+    "lowConfidenceNotice": "The model's confidence is low; it's worth reviewing the category manually."
+  },
+  "upload": {
+    "heading": "Upload file",
+    "description": "Upload a <1>.pdf</1> or <3>.txt</3> file. HoneyGuard classifies, summarizes, and saves it instantly to the backend.",
+    "dropzonePlaceholder": "Select or drag your file",
+    "dropzoneHint": "Accepted formats: PDF and TXT (max. 10 MB)",
+    "authorLabel": "Author (optional)",
+    "authorPlaceholder": "Unknown",
+    "typeLabel": "Type",
+    "invalidFileType": "Only .pdf or .txt files are accepted",
+    "fileTooLarge": "The file exceeds 10 MB",
+    "uploadErrorFallback": "The file could not be uploaded.",
+    "submitButton": "Upload and classify",
+    "submitButtonLoading": "Uploading and classifying…",
+    "coldStartNotice": "The backend on Render takes a few seconds the first time (cold start).",
+    "duplicateTitle": "Duplicate document",
+    "originalDocument": "Original document",
+    "originalDocumentMeta": "ID {{id}} · {{percent}}% similarity to the file you uploaded",
+    "uploadAnother": "Upload another file",
+    "savedLowConfidence": "Content saved — low confidence, review the category",
+    "saved": "Content saved",
+    "resultId": "ID {{id}}",
+    "resultSummary": "Automatic summary",
+    "noSummary": "No summary available.",
+    "noKeywords": "No keywords",
+    "relatedDocuments": "Related documents",
+    "relatedSimilarity": "{{percent}}% similar",
+    "authorFieldLabel": "Author:",
+    "typeFieldLabel": "Type:",
+    "viewOriginalFile": "View original file ↗"
+  },
+  "search": {
+    "heading": "Search content",
+    "description": "Query the documents stored in Oracle directly and open the full content by ID.",
+    "queryLabel": "Search text",
+    "queryPlaceholder": "E.g. Oracle, FastAPI, security, networks…",
+    "categoryPlaceholder": "Filter by category",
+    "authorPlaceholder": "Filter by author",
+    "typePlaceholder": "Content type",
+    "searchButton": "Search",
+    "searchButtonLoading": "Searching…",
+    "listAllButton": "List all",
+    "listAllButtonLoading": "Loading…",
+    "uploadNewLink": "Upload new file",
+    "resultsHeading": "Results",
+    "resultsCount": "{{count}} document(s)",
+    "noResults": "No documents were found matching those criteria.",
+    "confidence": "Confidence: {{percent}}%",
+    "viewFullDocument": "View full document",
+    "fullDocument": "Full document",
+    "summary": "Summary",
+    "content": "Content"
+  }
+}
