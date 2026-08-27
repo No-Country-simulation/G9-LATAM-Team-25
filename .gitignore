@@ -1,26 +1,17 @@
-# Entornos virtuales
-data_science/.venv/
-data_science/venv/
-data_science/env/
-data_science/.env
-
-# Datos
-data_science/data/*
-
-# Modelos
-data_science/models/*
-
-# Notebooks
-.ipynb_checkpoints/
-
-# Python
+# Entornos virtuales y dependencias de código
+venv/
+backend/venv/
+node_modules/
+front-lovable/node_modules/
+front-lovable/.output/
+front-lovable/.tanstack/
 __pycache__/
-*.py[cod]
-*.egg-info/
-build/
-dist/
+*.pyc
 
-# IDE / SO
-.vscode/
-.idea/
-.DS_Store
+# Variables de entorno y credenciales de seguridad
+.env
+backend/.env
+*.pem
+
+# Modelos locales pesados (ya los estamos leyendo desde OCI)
+*.pkl

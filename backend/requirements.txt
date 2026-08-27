@@ -1,0 +1,26 @@
+# --- Framework y Servidor ---
+fastapi
+uvicorn
+pydantic
+python-multipart
+
+# --- Variables de Entorno ---
+python-dotenv
+
+# --- Machine Learning y NLP ---
+joblib
+scikit-learn
+
+# --- Oracle Cloud y Base de Datos ---
+oci
+SQLAlchemy
+oracledb
+
+# --- Procesamiento y Extracción de Archivos ---
+PyPDF2
+python-docx
+
+# --- Testing ---
+pytest
+
+requests
