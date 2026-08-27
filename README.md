@@ -1,133 +1,401 @@
-<p align="center"> <strong>Equipo tejONEs — Team 25</strong>
-
-<br> Hackathon ONE · Alura + Oracle  </p>
-
-
-<h1 align="center">Nombre del proyecto: HoneyGuard</h1>
-
-
-
-## :triangular_ruler:
-
-🛠 1.	Descripción del proyecto
-
-
-El desafío asignado (TechMind — Organización Inteligente del Conocimiento Técnico) pide construir una solución que permita clasificar, organizar y facilitar la reutilización de contenido técnico (documentación, artículos, apuntes, tutoriales) usando técnicas de Ciencia de Datos, exponiendo los resultados vía una API REST integrada con OCI. 
-
-Dividimos nuestra solución en dos niveles: el MVP obligatorio que pide el enunciado, y una funcionalidad diferenciadora que decidimos agregar sobre esa base. 
-MVP obligatorio (lo mínimo que pide el enunciado) 
-
-El hackathon pide, como requisito mínimo, un servicio que exponga al menos un endpoint capaz de recibir contenido técnico en texto plano y devolver información procesada. Concretamente: 
-●	El usuario (o una aplicación cliente) envía un POST /contenido con {"titulo": "...", "texto": "..."}. 
-
-●	Nuestro modelo de clasificación (entrenado con TF-IDF + Regresión Logística) procesa ese texto. La API devuelve {"categoria": "...", "probabilidad": ..., "informacion_adicional": [...]} con la categoría predicha, su probabilidad y palabras clave asociadas. 
-
-Este es el flujo que se priorizará en el desarrollo del proyecto. Sobre esta base se implementará la funcionalidad diferenciadora descrita a continuación. 
-
-
-
-
-
-## :triangular_ruler:
-
-
-🛠 Nuestro enfoque / funcionalidad diferenciadora 
-
-Sobre ese MVP, decidimos agregar una capa adicional pensada para un caso de uso real: que el usuario no siempre tenga el tiempo o los datos completos para catalogar su contenido a mano. 
-
-●	El usuario podrá subir un archivo en formato .pdf o .txt (por el momento, estos son los únicos formatos soportados), en lugar de tener que copiar y pegar el texto a mano. 
-
-●	El sistema lee el documento y extrae su contenido en texto plano, que se guarda en nuestro dataset propio. Esto nos permite acceder al contenido de forma más simple y entrenar el modelo con mayor facilidad. 
-
-●	Si la persona que sube el archivo no completa todos los datos (por ejemplo, título, categoría o palabras clave), el modelo ya entrenado completa automáticamente los campos faltantes a partir del contenido del documento. En la interfaz de Lovable se muestran los campos autocompletados con un indicador visual de confianza, permitiendo a su vez al usuario poder editar y corregir esos campos antes de confirmar el guardado definitivo  — así se organiza mejor la base de conocimiento incluso con cargas incompletas.
-
-●	Además, el usuario podrá buscar contenido y recibir como resultado los documentos ya
-guardados que sean más parecidos a lo que busca (recomendación de contenidos relacionados por similitud de texto). 
-
-●	Generación Automática de Resúmenes: Cuando se extraiga el texto plano del archivo, después de clasificado, se usa un enfoque extractivo sencillo para generar un resumen automático de 3 líneas del documento.
-
-●	Clasificación automática de contenido: Cuando un usuario carga un documento o introduce texto manualmente, el sistema analiza su contenido y determina automáticamente la categoría a la que pertenece. 
-
-El documento es convertido a texto plano - El texto es limpiado y preprocesado - Se genera una representación vectorial mediante TF-IDF - El modelo de Machine Learning predice la categoría más probable - La API devuelve la categoría junto con su nivel de confianza.
-
-●	Detección de documentos similares: Antes de almacenar un nuevo documento, el sistema verifica si ya existe información muy parecida dentro de la base de conocimiento para evitar duplicados y ayuda a mantener organizada la información. Una vez vectorizado el documento, se compara con todos los documentos existentes mediante similitud coseno. Si la similitud supera un umbral determinado (por ejemplo, 90%), el sistema notifica al usuario que ya existe un documento muy similar. 
-
-●	Generación automática de palabras clave: El sistema identifica los conceptos más importantes presentes en el documento para facilitar futuras búsquedas. Durante el procesamiento del texto se calcula la importancia de cada término mediante técnicas estadísticas (TF-IDF) y filtros lingüísticos, seleccionando únicamente las palabras con mayor relevancia. 
-
-
-
-
-## :triangular_ruler:
-
-
-🛠 ●	Para esto, la arquitectura contempla un almacenamiento híbrido: 
-
-1.Oracle Autonomous Database: Aquí solo guardamos texto: el título, autor, palabras clave, la categoría que predice el programa
-
-2.(OCI Object Storage): Aquí es donde se guardan físicamente los archivos .pdf o .txt que suben los usuarios.
-
-
-
-
-## :triangular_ruler:
-
-
-🛠 Delimitación de Áreas y Responsabilidades (Swimlanes / Carriles)
-
-●	Usuario (Cliente / Operador): Interactúa con la interfaz web. Inicia las acciones (pegar texto, subir archivo, buscar) y consume las respuestas visuales.
-
-●	Frontend (Lovable UI): Capa de presentación. Responsable de capturar la entrada del usuario, enviar peticiones HTTP/REST estructuradas al Backend y renderizar datos, indicadores de confianza y estados de error.
-
-●	Backend (FastAPI - Orquestador Central): Es el único componente que interactúa con todas las demás áreas. Valida contratos Pydantic, maneja la lógica de negocio (umbrales, limpieza de archivos huérfanos), orquesta llamadas a Data Science y persiste/consulta en la nube de Oracle (OCI).
-
-●	Data Science (Servicio de Inferencia ML/NLP): Encargado de la inteligencia del sistema. Expone funciones puras en Python para limpieza de texto, vectorización TF-IDF, clasificación con Regresión Logística, extracción de palabras clave, resúmenes extractivos y cálculo de similitud coseno. Nunca se comunica directamente con Frontend ni con la BD.
-
-●	OCI Object Storage (Storage de Archivos Binarios): Repositorio no estructurado de Oracle Cloud. Almacena únicamente el archivo físico original.
-
-●	OCI Autonomous Database (Base de Datos Relacional): Almacena metadatos, categoría, probabilidad, palabras clave, resumen, texto plano extraído y la URL de referencia de Object Storage.
-
-
-
-
-## :triangular_ruler:
-
-
-🛠 La arquitectura está diseñada bajo un enfoque desacoplado y modular de cuatro capas principales:
-
-●	Capa de Cliente (Frontend): Desarrollada sobre Lovable, gestiona la interfaz gráfica de usuario para la carga de documentos, edición de metadatos y consultas de búsqueda.
-
-●	Capa de Backend (FastAPI): Expone la API REST encargada de recibir las peticiones HTTP (POST para recepción de texto/archivos y búsquedas, y GET para consulta por ID). Cuenta con un Orquestador de Flujo que valida las solicitudes mediante esquemas Pydantic y garantiza el cumplimiento del contrato JSON.
-
-●	Capa de Data Science (Inferencia): Módulo encargado del procesamiento de lenguaje natural (NLP) e inferencia analítica. Ejecuta el pipeline completo: extracción de texto (.pdf / .txt), limpieza y normalización, vectorización TF-IDF, clasificación mediante Regresión Logística, extracción de palabras clave, cálculo de Similitud Coseno y generación de resúmenes extractivos.
-
-●	Capa de Persistencia (Oracle Cloud Infrastructure - OCI): Gestiona el almacenamiento híbrido dividiendo el archivo físico (Object Storage) de la información estructurada (Autonomous DB).
-
-
-
-
-## :triangular_ruler:
-
-
-🛠 Para optimizar el rendimiento y reducir el costo de almacenamiento en la base de datos, el sistema implementa una arquitectura de almacenamiento híbrido en Oracle Cloud Infrastructure (OCI):
-
-●	OCI Object Storage: Actúa como el repositorio principal de binarios, almacenando únicamente los archivos planos o documentos originales (.pdf, .txt).
-
-●	OCI Autonomous Database: Almacena la capa de datos relacional y los resultados del análisis analítico. Guarda metadatos como título, autor, categoría inferida, palabras clave, el texto extraído en formato plano para búsquedas y la URL de referencia generada por el Object Storage.
-
-Esta separación permite mantener la base de datos liviana y altamente eficiente para consultas de texto e índices, sin sobrecargarla con el peso de archivos binarios.
-
-
-
-
-## :triangular_ruler:
-
-
-🛠 El contrato JSON estandariza la respuesta de la API REST hacia el cliente, agrupando la información procesada en cuatro objetos principales:
-
-●	metadatos: Contiene los datos identificadores del archivo (id, titulo, autor, url_archivo, fecha_creacion).
-
-●	clasificacion: Resumen analítico generado por el módulo de Data Science, incluyendo la categoria predecida, el nivel de probabilidad, un flag booleano requiere_revision (activado si la probabilidad es 0.70), lista de palabras_clave y el resumen sintético de 3 líneas.
-
-●	contenido_relacionado: Lista de objetos con documentos similares hallados mediante métricas de distancia vectoriales (id, titulo, categoria, similitud).
-
-●	contenido: Bloque que almacena el texto_extraido completo y el total_palabras. Nota de diseño: Este bloque utiliza una estrategia de Lazy Load; se omite en respuestas masivas o búsquedas para optimizar el consumo de ancho de banda y solo se envía al cliente cuando este consulta la vista detallada del registro (GET /contenido/{id}).
+<div align="center">
+  <img src="assets/brand/illustrations/honeyguard-logo.png" alt="Logo de HoneyGuard" width="40%" />
+
+  <p><strong>Organiza, clasifica y reutiliza conocimiento técnico con Machine Learning.</strong></p>
+  <p>
+    Proyecto desarrollado por <strong>Team 25 — tejONEs</strong> para el<br />
+    <strong>Hackathon ONE G9 | Alura + Oracle</strong>.
+  </p>
+  <p>
+    <a href="https://honeyguard-organizer.lovable.app">Ver demo 🍯</a> ·
+    <a href="https://g9-latam-team-25.onrender.com/docs">Explorar API 🦡</a> ·
+    <a href="https://github.com/No-Country-simulation/G9-LATAM-Team-25/issues">Reportar un problema 🪲</a>
+  </p>
+</div>
+
+<p align="center">
+  <img alt="Demo Online" src="https://img.shields.io/badge/Demo-Online-2E8B57" />
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" />
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" />
+  <img alt="React" src="https://img.shields.io/badge/React-Frontend-61DAFB?logo=react&logoColor=20232A" />
+  <img alt="Oracle Cloud Infrastructure" src="https://img.shields.io/badge/Oracle_Cloud-Infrastructure-F80000?logo=oracle&logoColor=white" />
+</p>
+
+![HoneyGuard: bóveda inteligente de conocimiento técnico](assets/brand/illustrations/honeyguard-readme-banner.png)
+
+
+## El problema
+
+La documentación técnica suele quedar dispersa entre archivos, artículos, tutoriales y apuntes. Con el tiempo aparecen duplicados, títulos poco descriptivos y contenidos difíciles de encontrar o reutilizar.
+
+## La solución
+
+**HoneyGuard** transforma documentos técnicos en conocimiento organizado. La plataforma recibe texto o archivos PDF/TXT, extrae su contenido y aplica Procesamiento de Lenguaje Natural para clasificarlos, resumirlos, generar palabras clave y relacionarlos con otros recursos.
+
+La solución reúne una interfaz web, una API REST, un pipeline de Machine Learning y servicios de Oracle Cloud para ofrecer un flujo completo: desde la carga de un documento hasta su consulta posterior.
+
+## Demostración
+
+<div align="center">
+  <img
+    src="assets/demo-honeyguard-cloud-workflow.gif"
+    alt="Demostración del procesamiento y almacenamiento en Cloud con HoneyGuard"
+    width="960"
+  />
+  <br />
+  <sub>Carga, clasificación, metadatos persistidos y consulta del documento almacenado.</sub>
+</div>
+
+## Funcionalidades
+
+<table>
+  <tr>
+    <td width="55%" valign="middle">
+      <h3>📄 Carga y análisis de documentos</h3>
+      <p>
+        HoneyGuard recibe documentación técnica y transforma el contenido del archivo
+        en información lista para consultar y reutilizar.
+      </p>
+      <ul>
+        <li>Admite archivos <code>.pdf</code> y <code>.txt</code>.</li>
+        <li>Extrae y normaliza el texto digital.</li>
+        <li>Conserva el archivo original en OCI Object Storage.</li>
+        <li>Registra el contenido y sus metadatos en Oracle Database.</li>
+      </ul>
+    </td>
+    <td width="45%" align="center" valign="middle">
+      <img
+        src="assets/brand/illustrations/honeyguard-feature-upload-analysis.png"
+        alt="HoneyGuard recibe y analiza documentos técnicos"
+        width="360"
+      />
+    </td>
+  </tr>
+  <tr>
+    <td width="45%" align="center" valign="middle">
+      <img
+        src="assets/brand/illustrations/honeyguard-feature-classification.png"
+        alt="HoneyGuard clasifica automáticamente el contenido técnico"
+        width="360"
+      />
+    </td>
+    <td width="55%" valign="middle">
+      <h3>🏷️ Clasificación automática</h3>
+      <p>
+        El modelo analiza el texto mediante TF-IDF y Regresión Logística para
+        asignar una categoría técnica de forma automática.
+      </p>
+      <ul>
+        <li>Devuelve la categoría y su nivel de confianza.</li>
+        <li>Genera palabras clave representativas.</li>
+        <li>Indica cuándo el resultado requiere revisión.</li>
+        <li>Cubre siete áreas del conocimiento tecnológico.</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="55%" valign="middle">
+      <h3>📝 Resumen automático</h3>
+      <p>
+        El resumidor extractivo identifica los fragmentos más relevantes sin
+        inventar información ni alterar el sentido del documento.
+      </p>
+      <ul>
+        <li>Selecciona hasta tres fragmentos representativos.</li>
+        <li>Conserva el orden en el que aparecen en la fuente.</li>
+        <li>Reduce redundancias mediante Maximal Marginal Relevance.</li>
+        <li>Procesa texto técnico, listas, HTML visible y fragmentos de código.</li>
+      </ul>
+    </td>
+    <td width="45%" align="center" valign="middle">
+      <img
+        src="assets/brand/illustrations/honeyguard-feature-summary.png"
+        alt="HoneyGuard genera un resumen extractivo del documento"
+        width="360"
+      />
+    </td>
+  </tr>
+  <tr>
+    <td width="45%" align="center" valign="middle">
+      <img
+        src="assets/brand/illustrations/honeyguard-feature-related-duplicates.png"
+        alt="HoneyGuard detecta duplicados y encuentra documentos relacionados"
+        width="360"
+      />
+    </td>
+    <td width="55%" valign="middle">
+      <h3>🔎 Búsqueda y contenidos relacionados</h3>
+      <p>
+        La plataforma compara los recursos mediante similitud coseno para ayudar
+        a recuperar información y evitar contenido repetido.
+      </p>
+      <ul>
+        <li>Detecta documentos duplicados y muestra su similitud.</li>
+        <li>Recomienda recursos relacionados.</li>
+        <li>Busca por texto dentro del contenido y sus metadatos.</li>
+        <li>Filtra por categoría, autor y tipo de contenido.</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+## ¿Cómo funciona?
+
+```mermaid
+flowchart LR
+    A[Texto o archivo PDF/TXT] --> B[Validación y extracción]
+    B --> C[Limpieza y TF-IDF]
+    C --> D[Clasificación y confianza]
+    C --> E[Resumen y palabras clave]
+    C --> F[Duplicados y relacionados]
+    D --> G[API REST]
+    E --> G
+    F --> G
+    G --> H[Interfaz web]
+    G --> I[(Oracle Database)]
+    B --> J[(OCI Object Storage)]
+```
+
+1. El usuario carga un PDF/TXT o envía texto directamente a la API.
+2. HoneyGuard valida la entrada y extrae el contenido visible.
+3. El pipeline limpia el texto y genera su representación TF-IDF.
+4. El modelo determina la categoría, la confianza y las palabras clave.
+5. El sistema genera un resumen y busca duplicados o documentos relacionados.
+6. El archivo original se almacena en OCI Object Storage y sus datos en Oracle Database.
+7. El contenido queda disponible para búsqueda, filtrado y consulta desde la aplicación.
+
+### Categorías del modelo
+
+- Backend
+- Frontend
+- Data Science
+- Mobile
+- DevOps
+- Cloud
+- Bases de Datos
+
+El conjunto de datos de trabajo reúne **1.400 recursos técnicos**, con 200 registros por categoría, obtenidos de fuentes como Microsoft Learn, Stack Exchange, Coursera y OpenAlex.
+
+## Integraciones
+
+| Componente | Integración |
+| --- | --- |
+| Aplicación web | React, TypeScript, TanStack Start, Tailwind CSS y Lovable |
+| API pública | FastAPI desplegada en Render |
+| Machine Learning | scikit-learn, TF-IDF, Regresión Logística y Joblib |
+| Procesamiento de texto | Python, pandas y NLTK |
+| Base de datos | Oracle Autonomous Database mediante SQLAlchemy y `oracledb` |
+| Almacenamiento | OCI Object Storage para los archivos originales |
+
+## Documentos compatibles
+
+- Archivos PDF con texto digital seleccionable.
+- Archivos de texto plano `.txt`.
+- Documentación, tutoriales, manuales, apuntes y artículos técnicos.
+- Contenido en español para las categorías cubiertas por el modelo.
+
+## API REST
+
+La API pública está disponible en:
+
+- Base URL: <https://g9-latam-team-25.onrender.com>
+- Swagger UI: <https://g9-latam-team-25.onrender.com/docs>
+- OpenAPI: <https://g9-latam-team-25.onrender.com/openapi.json>
+
+### Endpoints principales
+
+| Método | Endpoint | Descripción |
+| --- | --- | --- |
+| `POST` | `/contenido/clasificar` | Clasifica texto sin guardarlo en la base de datos |
+| `POST` | `/contenido/archivo` | Procesa, clasifica y almacena un archivo |
+| `GET` | `/contenido` | Lista documentos con paginación y filtros |
+| `GET` | `/contenido/{documento_id}` | Recupera el detalle de un documento |
+| `GET` | `/buscar` | Busca por texto y filtra por metadatos |
+| `GET` | `/health` | Informa el estado del servicio |
+
+### Clasificar texto
+
+`POST /contenido/clasificar`
+
+Ejemplo verificado contra el servicio publicado:
+
+```json
+{
+  "texto": "React permite crear interfaces frontend mediante componentes, hooks, estado, propiedades y eventos. TypeScript añade tipado estático y Vite compila la aplicación web.",
+  "top_n_palabras_clave": 5
+}
+```
+
+```json
+{
+  "categoria": "Frontend",
+  "probabilidad": 0.866268977539909,
+  "palabras_clave": [
+    "estático",
+    "frontend",
+    "react",
+    "eventos",
+    "interfaces"
+  ],
+  "requiere_revision": false
+}
+```
+
+El indicador `requiere_revision` se activa cuando la confianza del modelo aconseja validar manualmente la categoría.
+
+### Procesar un archivo
+`POST /contenido/archivo`
+
+Solicitud `multipart/form-data`:
+
+| Campo | Tipo | Descripción |
+| --- | --- | --- |
+| `file` | Archivo | Documento `.pdf` o `.txt` |
+| `autor` | Texto | Autor del recurso |
+| `tipo` | Texto | Tipo de contenido, por ejemplo `tutorial`, `apunte` o `documentación` |
+
+La respuesta agrupa los metadatos persistidos, la clasificación, el resumen, las palabras clave, el texto extraído y los contenidos relacionados. Si el archivo coincide con un recurso existente, la API devuelve el documento original y su nivel de similitud.
+
+## Ejecutar el proyecto localmente
+
+### Requisitos previos
+
+- Git
+- Python 3.10 o superior
+- Node.js 20 o superior y npm
+- Credenciales de Oracle Cloud para utilizar la persistencia
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/No-Country-simulation/G9-LATAM-Team-25.git
+cd G9-LATAM-Team-25
+```
+
+### 2. Iniciar el Backend
+
+```bash
+python -m venv .venv
+```
+
+Activa el entorno virtual:
+
+```bash
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# macOS / Linux
+source .venv/bin/activate
+```
+
+Instala las dependencias y levanta la API desde la raíz del repositorio:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r backend/requirements.txt
+python -m uvicorn app.main:app --app-dir backend --reload
+```
+
+La documentación local estará disponible en <http://127.0.0.1:8000/docs>.
+
+### 3. Iniciar el Frontend
+
+En otra terminal:
+
+```bash
+cd front-lovable
+npm install
+npm run dev
+```
+
+## Configuración del entorno
+
+La conexión con Oracle utiliza las siguientes variables:
+
+| Variable | Uso |
+| --- | --- |
+| `DB_USER` | Usuario de Oracle Autonomous Database |
+| `DB_PASSWORD` | Contraseña de la base de datos |
+| `OCI_USER` | OCID del usuario de OCI |
+| `OCI_TENANCY` | OCID del *tenancy* |
+| `OCI_FINGERPRINT` | Huella de la clave de API |
+| `OCI_KEY_FILE_PATH` | Ruta local a la clave privada |
+| `OCI_REGION` | Región de OCI |
+| `OCI_BUCKET_NAME` | Nombre del *bucket* de Object Storage |
+| `OCI_NAMESPACE` | *Namespace* de Object Storage |
+| `CORS_EXTRA_ORIGINS` | Orígenes adicionales permitidos por la API |
+| `BACKEND_API_URL` | URL del Backend utilizada por el Frontend |
+
+> [!IMPORTANT]
+> No confirmes archivos `.env`, claves privadas, credenciales ni *wallets* de Oracle en Git. Comparte secretos únicamente mediante el gestor de variables del entorno de despliegue.
+
+## Estructura del repositorio
+
+```text
+G9-LATAM-Team-25/
+├── assets/                  # Identidad visual e ilustraciones
+├── backend/                 # API, acceso a Oracle y almacenamiento OCI
+├── data_science/            # Datos, notebooks, procesamiento y entrenamiento
+├── docs/                    # Arquitectura y contratos de integración
+├── front-lovable/           # Aplicación web React/TypeScript
+├── shared/                  # Funciones compartidas de NLP
+├── tests/                   # Pruebas automatizadas
+└── README.md
+```
+
+## Pruebas
+
+Las pruebas de procesamiento se ejecutan desde la raíz:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+El resumen automático está cubierto con casos para segmentación, HTML/XML, abreviaturas, listas, código, MMR, entradas límite y resultados deterministas. El pipeline también fue validado sobre las 1.400 filas del conjunto de datos de trabajo.
+
+Para validar el Frontend:
+
+```bash
+cd front-lovable
+npm run lint
+npm run build
+```
+
+## Equipo
+
+<table>
+  <tr>
+    <td width="52%" align="center" valign="middle">
+      <img
+        src="assets/brand/illustrations/tejones-team-portrait.png"
+        alt="Retrato del Team 25 — tejONEs"
+        width="520"
+      />
+      <br />
+      <sub><strong>Team 25 — tejONEs</strong></sub>
+    </td>
+    <td width="48%" valign="middle">
+      <h3>Integrantes y roles</h3>
+      <ul>
+        <li><strong>Houston Gaona</strong> — Data Scientist</li>
+        <li><strong>Miguel Escudero</strong> — Data Scientist</li>
+        <li><strong>Laura Duque</strong> — Data Scientist</li>
+        <li><strong>Anahi Lagunas</strong> — Data Analyst</li>
+        <li><strong>Cecilia Barranco</strong> — Backend Developer</li>
+        <li><strong>Yeifry Vargas</strong> — Backend Developer</li>
+        <li><strong>Luis Ramírez</strong> — Backend Developer</li>
+        <li><strong>Carlos Torres</strong> — Full Stack Developer</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+## Contexto del proyecto
+
+HoneyGuard responde al desafío **TechMind — Organización Inteligente del Conocimiento Técnico**, propuesto durante el Hackathon ONE G9 de Alura + Oracle. El reto consiste en clasificar, organizar y facilitar la reutilización de contenido técnico mediante Ciencia de Datos, una API REST e integración con Oracle Cloud Infrastructure.
+
+---
+
+<div align="center">
+  Construido con 🍯 por <strong>Team 25 — tejONEs</strong>.
+</div>
