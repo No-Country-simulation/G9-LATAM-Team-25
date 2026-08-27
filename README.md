@@ -1,27 +1,28 @@
 <div align="center">
-  <img src="assets/brand/illustrations/honeyguard-logo.png" alt="Logo de HoneyGuard" width="160" />
-  <h1>HoneyGuard</h1>
+  <img src="assets/brand/illustrations/honeyguard-logo.png" alt="Logo de HoneyGuard" width="40%" />
+
   <p><strong>Organiza, clasifica y reutiliza conocimiento técnico con Machine Learning.</strong></p>
   <p>
     Proyecto desarrollado por <strong>Team 25 — tejONEs</strong> para el<br />
     <strong>Hackathon ONE G9 | Alura + Oracle</strong>.
   </p>
   <p>
-    <a href="https://honeyguard-organizer.lovable.app">Ver demo</a> ·
-    <a href="https://g9-latam-team-25.onrender.com/docs">Explorar API</a> ·
-    <a href="https://github.com/No-Country-simulation/G9-LATAM-Team-25/issues">Reportar un problema</a>
+    <a href="https://honeyguard-organizer.lovable.app">Ver demo 🍯</a> ·
+    <a href="https://g9-latam-team-25.onrender.com/docs">Explorar API 🦡</a> ·
+    <a href="https://github.com/No-Country-simulation/G9-LATAM-Team-25/issues">Reportar un problema 🪲</a>
   </p>
 </div>
 
 <p align="center">
-  <img alt="Demo online" src="https://img.shields.io/badge/demo-online-2E8B57" />
+  <img alt="Demo Online" src="https://img.shields.io/badge/Demo-Online-2E8B57" />
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" />
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" />
   <img alt="React" src="https://img.shields.io/badge/React-Frontend-61DAFB?logo=react&logoColor=20232A" />
   <img alt="Oracle Cloud Infrastructure" src="https://img.shields.io/badge/Oracle_Cloud-Infrastructure-F80000?logo=oracle&logoColor=white" />
 </p>
 
-![HoneyGuard: bóveda inteligente de conocimiento técnico](assets/brand/illustrations/honeyguard-hero-knowledge-vault.png)
+![HoneyGuard: bóveda inteligente de conocimiento técnico](assets/brand/illustrations/honeyguard-readme-banner.png)
+
 
 ## El problema
 
@@ -32,6 +33,18 @@ La documentación técnica suele quedar dispersa entre archivos, artículos, tut
 **HoneyGuard** transforma documentos técnicos en conocimiento organizado. La plataforma recibe texto o archivos PDF/TXT, extrae su contenido y aplica Procesamiento de Lenguaje Natural para clasificarlos, resumirlos, generar palabras clave y relacionarlos con otros recursos.
 
 La solución reúne una interfaz web, una API REST, un pipeline de Machine Learning y servicios de Oracle Cloud para ofrecer un flujo completo: desde la carga de un documento hasta su consulta posterior.
+
+## Demostración
+
+<div align="center">
+  <img
+    src="assets/demo-honeyguard-cloud-workflow.gif"
+    alt="Demostración del procesamiento y almacenamiento en Cloud con HoneyGuard"
+    width="960"
+  />
+  <br />
+  <sub>Carga, clasificación, metadatos persistidos y consulta del documento almacenado.</sub>
+</div>
 
 ## Funcionalidades
 
@@ -125,6 +138,7 @@ La solución reúne una interfaz web, una API REST, un pipeline de Machine Learn
     </td>
   </tr>
 </table>
+
 ## ¿Cómo funciona?
 
 ```mermaid
